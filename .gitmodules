@@ -1,0 +1,9 @@
+[submodule "modules/supabase-mobile-tms-shipper"]
+	path = modules/supabase-mobile-tms-shipper
+	url = https://gitee.com/art-si/supabase-mobile-tms-shipper.git
+[submodule "modules/supabase-mobile-tms-driver"]
+	path = modules/supabase-mobile-tms-driver
+	url = https://gitee.com/wangyanghub/supabase-mobile-tms-driver.git
+[submodule "modules/supabase-mobile-smis"]
+	path = modules/supabase-mobile-smis
+	url = https://gitee.com/wangyanghub/supabase-mobile-smis.git

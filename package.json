@@ -1,0 +1,20 @@
+{
+  "name": "supabase-mobile-pro",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "modules:init": "git submodule update --init --recursive",
+    "modules:status": "git submodule status --recursive",
+    "modules:install": "node scripts/modules.mjs install",
+    "modules:check": "node scripts/modules.mjs typecheck",
+    "modules:build": "node scripts/modules.mjs build",
+    "dev:h5": "node scripts/modules.mjs dev:h5",
+    "dev:mp-weixin": "node scripts/modules.mjs dev:mp-weixin",
+    "build:h5": "node scripts/modules.mjs build:h5",
+    "build:mp-weixin": "node scripts/modules.mjs build:mp-weixin",
+    "font:css": "node scripts/build-ui-font-css.mjs"
+  }
+}

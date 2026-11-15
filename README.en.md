@@ -1,36 +1,18 @@
 # supabase-mobile-pro
 
-#### Description
-{**When you're done, you can delete the content in this README and update the file with details for others getting started with your repository**}
+The driver, shipper, and SMIS apps use the driver's design system. The main repository owns the shared theme, styles, font, components, and build tooling. Each Git submodule owns its business pages, authentication, permissions, API, routes, and release settings.
 
-#### Software Architecture
-Software architecture description
+Use Node.js 22.13 or later and the pnpm version pinned in `package.json`.
 
-#### Installation
+```sh
+git clone --recurse-submodules https://gitee.com/art-si/supabase-mobile-pro.git
+cd supabase-mobile-pro
+pnpm modules:install
+pnpm dev:h5 driver
+```
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+Use `driver`, `shipper`, or `smis` with `pnpm dev:h5`, `pnpm dev:mp-weixin`, `pnpm build:h5`, or `pnpm build:mp-weixin`. `pnpm modules:check` checks types and `pnpm modules:build` builds both platforms for all three apps. Each app keeps its own dependency installation, lockfile, environment configuration, and output locations.
 
-#### Instructions
+Edit the shared source in `packages/mobile-core/src`. Development, builds, and type checks copy it into each app's ignored `src/_mobile-core/` directory for the mini program compiler. Restart a running development server to pick up changes to the shared source. A standalone app checkout can locate a sibling `supabase-mobile-pro` checkout or use `MOBILE_PRO_ROOT` to locate the matching platform version.
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### Contribution
-
-1.  Fork the repository
-2.  Create Feat_xxx branch
-3.  Commit your code
-4.  Create Pull Request
-
-
-#### Gitee Feature
-
-1.  You can use Readme\_XXX.md to support different languages, such as Readme\_en.md, Readme\_zh.md
-2.  Gitee blog [blog.gitee.com](https://blog.gitee.com)
-3.  Explore open source project [https://gitee.com/explore](https://gitee.com/explore)
-4.  The most valuable open source project [GVP](https://gitee.com/gvp)
-5.  The manual of Gitee [https://gitee.com/help](https://gitee.com/help)
-6.  The most popular members  [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+Push submodule commits first, then commit the updated Git submodule pointers in the main repository.

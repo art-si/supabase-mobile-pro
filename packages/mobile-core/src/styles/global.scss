@@ -1,0 +1,376 @@
+@use '@wot-ui/ui/styles/theme/index.scss' as *;
+@use './presets.scss';
+@use './font.scss';
+
+@mixin apply($prefix, $icon-family, $icon-path) {
+  @include presets.apply($prefix);
+  @include font.embed();
+
+  @font-face {
+    font-family: $icon-family;
+    src: url('#{$icon-path}') format('truetype');
+    font-style: normal;
+    font-weight: 400;
+    font-display: block;
+  }
+
+  :root,
+  page,
+  .wd-root-portal {
+    --#{$prefix}-font-family: 'TMS Sans SC', 'HarmonyOS Sans SC', 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+    --wot-typography-title-font-family: var(--#{$prefix}-font-family);
+    --wot-typography-body-font-family: var(--#{$prefix}-font-family);
+    --wot-typography-label-font-family: var(--#{$prefix}-font-family);
+    --wot-font-weight-medium: 500;
+    --wot-font-weight-semibold: 600;
+    --#{$prefix}-bg: #f5f5f7;
+    --#{$prefix}-panel: #fbfbfd;
+    --#{$prefix}-surface: #ffffff;
+    --#{$prefix}-surface-raised: #ffffff;
+    --#{$prefix}-surface-soft: #f8f8fa;
+    --#{$prefix}-surface-muted: #f2f2f4;
+    --#{$prefix}-material-thin: rgba(255, 255, 255, 0.68);
+    --#{$prefix}-material-regular: rgba(255, 255, 255, 0.9);
+    --#{$prefix}-text: #152033;
+    --#{$prefix}-text-strong: #172033;
+    --#{$prefix}-text-secondary: #748096;
+    --#{$prefix}-muted: #66738a;
+    --#{$prefix}-light: #98a3b5;
+    --#{$prefix}-line: rgba(60, 60, 67, 0.16);
+    --#{$prefix}-line-subtle: rgba(60, 60, 67, 0.1);
+    --#{$prefix}-green: #0f9f6e;
+    --#{$prefix}-green-strong: #059669;
+    --#{$prefix}-green-soft: #ecfdf5;
+    --#{$prefix}-orange: #ea8a14;
+    --#{$prefix}-orange-strong: #d97706;
+    --#{$prefix}-orange-soft: #fffbeb;
+    --#{$prefix}-red: #e5484d;
+    --#{$prefix}-red-strong: #dc2626;
+    --#{$prefix}-red-soft: #fef2f2;
+    --#{$prefix}-info: #315ea8;
+    --#{$prefix}-info-soft: #eef5ff;
+    --#{$prefix}-disabled: #929daf;
+    --#{$prefix}-apple-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --#{$prefix}-apple-duration-fast: 120ms;
+    --#{$prefix}-apple-duration-standard: 220ms;
+    --#{$prefix}-radius-sm: 14rpx;
+    --#{$prefix}-radius-md: 18rpx;
+    --#{$prefix}-radius-lg: 26rpx;
+    --#{$prefix}-radius-xl: 32rpx;
+    --#{$prefix}-control-height: max(88rpx, 44px);
+    --#{$prefix}-control-radius: 18rpx;
+    --#{$prefix}-control-font-size: max(28rpx, 12px);
+    --#{$prefix}-tabbar-space: calc(160rpx + env(safe-area-inset-bottom));
+    --#{$prefix}-shadow-sm: 0 8rpx 24rpx rgba(15, 23, 42, 0.06);
+    --#{$prefix}-shadow-md: 0 18rpx 44rpx rgba(15, 23, 42, 0.1);
+    --#{$prefix}-shadow-floating: 0 20rpx 48rpx rgba(15, 23, 42, 0.12);
+  }
+
+  .page {
+    min-height: 100vh;
+    min-height: 100dvh;
+    color: var(--#{$prefix}-text);
+    background: var(--#{$prefix}-bg);
+  }
+
+  .safe-bottom {
+    padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  }
+
+  .card {
+    position: relative;
+    min-width: 0;
+    overflow: hidden;
+    background: var(--#{$prefix}-material-regular);
+    border: 1rpx solid var(--#{$prefix}-line);
+    border-radius: var(--#{$prefix}-radius-lg);
+    box-shadow: var(--#{$prefix}-shadow-sm);
+    backdrop-filter: blur(18rpx) saturate(140%);
+    -webkit-backdrop-filter: blur(18rpx) saturate(140%);
+  }
+
+  .section-title {
+    color: var(--#{$prefix}-text);
+    font-size: 30rpx;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.45rpx;
+    font-optical-sizing: auto;
+    text-wrap: balance;
+  }
+
+  .section-eyebrow {
+    display: block;
+    color: var(--#{$prefix}-muted);
+    font-size: max(21rpx, 12px);
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  /* 业务操作按钮。custom-class 会直接落到 wd-button 的真实 button 节点。 */
+  .#{$prefix}-primary-action,
+  .#{$prefix}-secondary-action,
+  .#{$prefix}-danger-action {
+    height: var(--#{$prefix}-control-height) !important;
+    min-height: var(--#{$prefix}-control-height) !important;
+    padding: 0 32rpx !important;
+    border-radius: var(--#{$prefix}-control-radius) !important;
+    font-size: var(--#{$prefix}-control-font-size) !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    touch-action: manipulation;
+    transition:
+      transform var(--#{$prefix}-apple-duration-fast) var(--#{$prefix}-apple-ease),
+      box-shadow var(--#{$prefix}-apple-duration-standard) var(--#{$prefix}-apple-ease),
+      background-color var(--#{$prefix}-apple-duration-standard) var(--#{$prefix}-apple-ease),
+      border-color var(--#{$prefix}-apple-duration-standard) var(--#{$prefix}-apple-ease);
+  }
+
+  .#{$prefix}-secondary-action::after,
+  .#{$prefix}-danger-action::after {
+    border: 0 !important;
+  }
+
+  .#{$prefix}-primary-action {
+    color: #fff !important;
+    border: 0 !important;
+    background: var(--#{$prefix}-primary) !important;
+    box-shadow: var(--#{$prefix}-shadow-primary);
+  }
+
+  .#{$prefix}-secondary-action {
+    color: var(--#{$prefix}-primary) !important;
+    border: 2rpx solid rgba(var(--#{$prefix}-primary-rgb), 0.28) !important;
+    background: var(--#{$prefix}-primary-soft) !important;
+    box-shadow: none !important;
+  }
+
+  .#{$prefix}-danger-action {
+    color: var(--#{$prefix}-red) !important;
+    border: 2rpx solid rgba(229, 72, 77, 0.24) !important;
+    background: #fff7f7 !important;
+    box-shadow: none !important;
+  }
+
+  .#{$prefix}-primary-action.is-disabled,
+  .#{$prefix}-secondary-action.is-disabled,
+  .#{$prefix}-danger-action.is-disabled {
+    opacity: 0.62;
+    box-shadow: none;
+  }
+
+  .#{$prefix}-primary-action:active:not(.is-disabled),
+  .#{$prefix}-secondary-action:active:not(.is-disabled),
+  .#{$prefix}-danger-action:active:not(.is-disabled) {
+    transform: translateY(1rpx) scale(0.99);
+  }
+
+  .#{$prefix}-primary-action:focus-visible,
+  .#{$prefix}-secondary-action:focus-visible,
+  .#{$prefix}-danger-action:focus-visible {
+    outline: 4rpx solid rgba(var(--#{$prefix}-primary-rgb), 0.28);
+    outline-offset: 4rpx;
+  }
+
+  .#{$prefix}-primary-action .wd-button__content,
+  .#{$prefix}-secondary-action .wd-button__content,
+  .#{$prefix}-danger-action .wd-button__content {
+    height: 100%;
+    gap: 10rpx;
+    line-height: 1;
+  }
+
+  .#{$prefix}-primary-action .wd-button__text,
+  .#{$prefix}-secondary-action .wd-button__text,
+  .#{$prefix}-danger-action .wd-button__text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10rpx;
+    line-height: 1.2;
+  }
+
+  .#{$prefix}-inline-action {
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+  }
+
+  .#{$prefix}-inline-action > text {
+    margin-left: 8rpx;
+    line-height: 1.2;
+  }
+
+  .required-mark {
+    margin-left: 6rpx;
+    color: #ef4d57 !important;
+    font-weight: 700;
+  }
+
+  .wd-cell.#{$prefix}-date-trigger {
+    --wot-cell-padding: 0 20rpx;
+    height: var(--#{$prefix}-control-height);
+    min-height: var(--#{$prefix}-control-height);
+    margin-top: 16rpx;
+    padding: 0 20rpx;
+    border: 1rpx solid var(--#{$prefix}-line);
+    border-radius: 12rpx;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .wd-cell.#{$prefix}-select-trigger {
+    --wot-cell-padding: 0 20rpx;
+    width: 100%;
+    height: var(--#{$prefix}-control-height);
+    min-height: var(--#{$prefix}-control-height);
+    margin-top: 16rpx;
+    padding: 0 20rpx;
+    border: 1rpx solid var(--#{$prefix}-line);
+    border-radius: 16rpx;
+    background: var(--#{$prefix}-panel);
+    display: flex;
+    align-items: center;
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .wd-cell.#{$prefix}-date-trigger:focus-within,
+  .wd-cell.#{$prefix}-select-trigger:focus-within,
+  .wd-input.#{$prefix}-form-input:focus-within,
+  .wd-textarea.#{$prefix}-form-textarea:focus-within {
+    border-color: rgba(var(--#{$prefix}-primary-rgb), 0.58);
+    box-shadow: 0 0 0 4rpx rgba(var(--#{$prefix}-primary-rgb), 0.1);
+  }
+
+  .wd-cell.#{$prefix}-select-trigger .wd-cell__wrapper,
+  .wd-cell.#{$prefix}-date-trigger .wd-cell__wrapper {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+  }
+
+  .wd-cell.#{$prefix}-select-trigger .wd-cell__right,
+  .wd-cell.#{$prefix}-date-trigger .wd-cell__right,
+  .wd-cell.#{$prefix}-select-trigger .wd-cell__body,
+  .wd-cell.#{$prefix}-date-trigger .wd-cell__body {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+  }
+
+  .wd-cell.#{$prefix}-select-trigger .wd-cell__arrow-right,
+  .wd-cell.#{$prefix}-date-trigger .wd-cell__arrow-right {
+    margin-left: auto;
+    flex: none;
+  }
+
+  .wd-cell.#{$prefix}-select-trigger .wd-cell__value {
+    color: var(--#{$prefix}-text);
+    font-size: max(26rpx, 12px);
+    font-weight: 700;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .wd-cell.#{$prefix}-select-trigger--small {
+    height: var(--#{$prefix}-control-height);
+    min-height: var(--#{$prefix}-control-height);
+    margin-top: 0;
+    padding: 0 16rpx;
+  }
+
+  .wd-cell.#{$prefix}-select-trigger--small .wd-cell__value {
+    font-size: max(24rpx, 12px);
+  }
+
+  .wd-cell.#{$prefix}-date-trigger .wd-cell__value {
+    color: var(--#{$prefix}-text);
+    font-size: max(27rpx, 12px);
+    font-weight: 600;
+    text-align: left;
+  }
+
+  .wd-textarea.#{$prefix}-form-textarea {
+    width: 100%;
+    min-height: 150rpx;
+    margin-top: 14rpx;
+    padding: 18rpx 20rpx 46rpx;
+    border: 1rpx solid var(--#{$prefix}-line);
+    border-radius: 16rpx;
+    background: #fff;
+  }
+
+  .wd-textarea.#{$prefix}-form-textarea .wd-textarea__inner {
+    min-height: 82rpx;
+    background: #fff;
+    color: var(--#{$prefix}-text);
+    font-size: max(25rpx, 12px);
+  }
+
+  .wd-input.#{$prefix}-form-input {
+    width: 100%;
+    height: var(--#{$prefix}-control-height);
+    min-height: var(--#{$prefix}-control-height);
+    margin-top: 16rpx;
+    padding: 0 20rpx;
+    border: 1rpx solid var(--#{$prefix}-line);
+    border-radius: var(--#{$prefix}-control-radius);
+    background: var(--#{$prefix}-panel);
+    display: flex;
+    align-items: center;
+  }
+
+  .wd-input.#{$prefix}-form-input .wd-input__inner {
+    color: var(--#{$prefix}-text);
+    font-size: max(26rpx, 12px);
+  }
+
+  .wd-input.#{$prefix}-form-input--small {
+    --wot-input-padding: 0 16rpx;
+    --wot-input-bg: #f6f8fb;
+    --wot-input-inner-height: 42rpx;
+    height: var(--#{$prefix}-control-height);
+    min-height: var(--#{$prefix}-control-height);
+    margin-top: 0;
+    padding: 0 16rpx;
+    border-radius: 16rpx;
+  }
+
+  .wd-input.#{$prefix}-form-input--small .wd-input__inner {
+    font-size: max(24rpx, 12px);
+  }
+
+  @media screen and (min-width: 520px) {
+    .page {
+      max-width: 520px;
+      margin: 0 auto;
+      box-shadow: 0 0 80rpx rgba(34, 45, 74, 0.1);
+    }
+  }
+
+  /* #ifdef H5 */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  /* #endif */
+}

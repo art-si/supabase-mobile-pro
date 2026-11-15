@@ -1,39 +1,34 @@
 # supabase-mobile-pro
 
-#### 介绍
-{**以下是 Gitee 平台说明，您可以替换此简介**
-Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用 Gitee 实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
+司机端、货主端和 SMIS 共用司机端的移动样式。主仓维护样式、主题状态、字体、通用组件和构建脚本。三个 Git 子仓各自维护业务页面、登录、权限、API、路由和应用发布配置。
 
-#### 软件架构
-软件架构说明
+## 开发
 
+使用 Node.js 22.13 或更新版本，并按主仓 `package.json` 中的版本使用 pnpm。
 
-#### 安装教程
+```sh
+git clone --recurse-submodules https://gitee.com/art-si/supabase-mobile-pro.git
+cd supabase-mobile-pro
+pnpm modules:install
+pnpm dev:h5 driver
+```
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+已有主仓检出可用 `pnpm modules:init` 初始化或同步到主仓记录的子仓版本。各应用使用自己的依赖目录、锁文件和环境配置。环境配置参见对应应用的 README。
 
-#### 使用说明
+| 应用参数 | Git 子仓 |
+| --- | --- |
+| `driver` | `modules/supabase-mobile-tms-driver` |
+| `shipper` | `modules/supabase-mobile-tms-shipper` |
+| `smis` | `modules/supabase-mobile-smis` |
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+用 `pnpm dev:h5 <应用>` 或 `pnpm dev:mp-weixin <应用>` 启动指定端。`pnpm modules:check` 对三个应用做类型检查，`pnpm modules:build` 构建三端的 H5 和微信小程序。也可用 `pnpm build:h5 <应用>` 或 `pnpm build:mp-weixin <应用>` 单独构建。产物写入各子仓原有位置。
 
-#### 参与贡献
+## 公共样式
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+在 `packages/mobile-core/src` 修改公共实现。三端从同一套 Sass 样式获取主题色、字体、卡片、按钮和表单控件样式。主题选择沿用各自的缓存键，图标字体沿用各自的图标集。业务页面的专有样式放在所在子仓。
 
+开发、构建和类型检查会先把公共源码同步到各子仓的 `src/_mobile-core/`，再通过 `@mobile-core/` 引用。微信小程序编译器需要在应用自己的输入目录内解析组件，因此生成目录由脚本管理并受 Git 忽略。运行中的开发服务重新启动后会同步新的公共代码。
 
-#### 特技
+单独检出的业务仓可通过 `MOBILE_PRO_ROOT` 指向对应版本的主仓目录，也可以和名为 `supabase-mobile-pro` 的主仓检出放在同一级。字体的生成和授权说明见 [TMS Sans SC](packages/mobile-core/assets/fonts/README.md)。
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+发布代码时先推送子仓提交，再在主仓更新并提交子仓指针。用 `pnpm modules:status` 查看主仓锁定的版本。
