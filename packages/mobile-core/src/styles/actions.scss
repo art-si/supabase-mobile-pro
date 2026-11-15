@@ -1,0 +1,47 @@
+@mixin apply($prefix) {
+  .mobile-action {
+    box-sizing: border-box;
+    width: auto;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    text-align: inherit;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-action::after { display: none; }
+  .mobile-action:focus-visible {
+    outline: 2px solid var(--mobile-action-focus-color, var(--#{$prefix}-primary));
+    outline-offset: 2px;
+  }
+
+  .mobile-action:active:not([disabled]),
+  .mobile-action--pressed { opacity: .78; }
+  .mobile-action[disabled] { opacity: .55; }
+
+  .mobile-action--link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--#{$prefix}-control-height);
+    padding: var(--mobile-action-link-padding, 0 8px);
+    border-radius: 8px;
+    color: var(--mobile-action-link-color, var(--#{$prefix}-primary));
+    font-size: var(--mobile-action-link-font-size, max(23rpx, 12px));
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .mobile-action--link:active:not([disabled]),
+  .mobile-action--link.mobile-action--pressed {
+    color: var(--mobile-action-link-active-color, var(--mobile-action-link-color, var(--#{$prefix}-primary)));
+    background: var(--mobile-action-link-active-background, transparent);
+  }
+}

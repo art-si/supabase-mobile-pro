@@ -2,15 +2,21 @@
 @use './presets.scss';
 @use './font.scss';
 @use './icons.scss';
+@use './actions.scss';
 
 @mixin apply($prefix) {
   @include presets.apply($prefix);
   @include font.embed();
   @include icons.embed();
+  @include actions.apply($prefix);
 
   :root,
   page,
   .wd-root-portal {
+    --mobile-safe-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+    --mobile-safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
+    --mobile-safe-left: max(env(safe-area-inset-left, 0px), var(--safe-area-inset-left, 0px));
+    --mobile-safe-right: max(env(safe-area-inset-right, 0px), var(--safe-area-inset-right, 0px));
     --#{$prefix}-font-family: 'TMS Sans SC', 'HarmonyOS Sans SC', 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
     --wot-typography-title-font-family: var(--#{$prefix}-font-family);
     --wot-typography-body-font-family: var(--#{$prefix}-font-family);
@@ -54,7 +60,7 @@
     --#{$prefix}-control-height: max(88rpx, 44px);
     --#{$prefix}-control-radius: 18rpx;
     --#{$prefix}-control-font-size: max(28rpx, 12px);
-    --#{$prefix}-tabbar-space: calc(160rpx + env(safe-area-inset-bottom));
+    --#{$prefix}-tabbar-space: calc(160rpx + var(--mobile-safe-bottom));
     --#{$prefix}-shadow-sm: 0 8rpx 24rpx rgba(15, 23, 42, 0.06);
     --#{$prefix}-shadow-md: 0 18rpx 44rpx rgba(15, 23, 42, 0.1);
     --#{$prefix}-shadow-floating: 0 20rpx 48rpx rgba(15, 23, 42, 0.12);
@@ -68,7 +74,7 @@
   }
 
   .safe-bottom {
-    padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+    padding-bottom: calc(24rpx + var(--mobile-safe-bottom));
   }
 
   .card {

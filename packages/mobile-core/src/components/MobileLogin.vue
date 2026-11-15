@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import MobileAction from './MobileAction.vue'
 import MobileIcon from './MobileIcon.vue'
+import { useSystemInsets } from '../system-insets'
 
 defineOptions({ options: { styleIsolation: 'apply-shared' } })
 
@@ -31,6 +33,7 @@ const props = withDefaults(defineProps<{
   notice?: string
 }>(), { themeScope: 'tms' })
 const emit = defineEmits<{ success: [] }>()
+const systemInsets = useSystemInsets()
 
 const account = ref('')
 const password = ref('')
@@ -163,7 +166,7 @@ function forgotPassword() {
 
 <template>
 <wd-config-provider :theme="themeName">
-  <view class="login-page page" :style="themeVariables">
+  <view class="login-page page" :style="[themeVariables, systemInsets]">
     <view class="login-page__orb login-page__orb--one" />
     <view class="login-page__orb login-page__orb--two" />
     <view class="login-page__grid" />
@@ -264,13 +267,9 @@ function forgotPassword() {
             记住我
           </wd-checkbox>
         </view>
-        <button
-          class="login-form__link"
-          hover-class="login-form__link--pressed"
-          @tap="forgotPassword"
-        >
+        <MobileAction variant="link" @click="forgotPassword">
           忘记密码？
-        </button>
+        </MobileAction>
       </view>
 
       <text v-if="notice && !loginError" class="login-form__notice">{{ notice }}</text>
@@ -295,7 +294,7 @@ function forgotPassword() {
         </wd-button>
       </view>
       <view v-if="demo" class="login-form__demo">
-        <button class="login-form__link" :disabled="loading" @tap="demo">进入演示</button>
+        <MobileAction variant="link" :disabled="loading" @click="demo">进入演示</MobileAction>
       </view>
     </view>
 
@@ -327,11 +326,18 @@ function forgotPassword() {
 
 <style scoped lang="scss">
 .login-page {
+  --mobile-action-link-padding: 0 4rpx 0 18rpx;
+  --mobile-action-link-active-color: var(--login-primary-deep);
+  --mobile-action-link-active-background: rgba(var(--login-primary-rgb), 0.06);
+
   position: relative;
   box-sizing: border-box;
   min-height: 100vh;
   min-height: 100dvh;
-  padding: calc(70rpx + env(safe-area-inset-top)) 34rpx calc(32rpx + env(safe-area-inset-bottom));
+  padding: calc(70rpx + var(--mobile-safe-top, 0px))
+    max(34rpx, var(--mobile-safe-right, 0px))
+    calc(32rpx + var(--mobile-safe-bottom, 0px))
+    max(34rpx, var(--mobile-safe-left, 0px));
   overflow-x: hidden;
   background:
     radial-gradient(circle at 92% 2%, rgba(var(--login-primary-rgb), 0.12), transparent 360rpx),
@@ -456,7 +462,6 @@ function forgotPassword() {
 .login-page__name {
   color: #172033;
   font-size: 50rpx;
-  font-style: italic;
   font-weight: 700;
   letter-spacing: 0;
 }
@@ -655,43 +660,13 @@ function forgotPassword() {
   font-size: max(23rpx, 12px);
 }
 
-.login-form__link {
-  min-height: 88rpx;
-  margin: 0;
-  padding: 0 4rpx 0 18rpx;
-  border: 0;
-  color: var(--login-primary);
-  background: transparent;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: max(23rpx, 12px);
-  font-weight: 700;
-  line-height: 1;
-  touch-action: manipulation;
-  transition:
-    color var(--login-apple-duration-fast) var(--login-apple-ease),
-    background-color var(--login-apple-duration-fast) var(--login-apple-ease),
-    transform var(--login-apple-duration-fast) var(--login-apple-ease);
-}
-
-.login-form__link::after {
-  border: 0;
-}
-
-.login-form__link--pressed {
-  color: var(--login-primary-deep);
-  background: rgba(var(--login-primary-rgb), 0.06);
-  transform: scale(0.98);
-}
-
 .login-form__button {
   margin-top: 24rpx;
 }
 
 @media screen and (max-height: 700px) {
   .login-page {
-    padding-top: calc(38rpx + env(safe-area-inset-top));
+    padding-top: calc(38rpx + var(--mobile-safe-top, 0px));
   }
 
   .login-page__eyebrow {
@@ -702,6 +677,12 @@ function forgotPassword() {
     margin-top: 38rpx;
   }
 }
+
+/* #ifdef MP-WEIXIN */
+.login-page {
+  padding-top: max(var(--mobile-capsule-top, 0px), calc(48px + var(--mobile-safe-top, 0px)));
+}
+/* #endif */
 
 .login-page__phone-wrap {
   margin-top: 24rpx;

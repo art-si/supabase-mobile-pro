@@ -1,0 +1,115 @@
+@mixin styles() {
+  .mobile-group {
+    --mobile-row-inset: var(--mobile-workspace-card-padding, 16px);
+    min-width: 0;
+    overflow: hidden;
+    background: var(--mobile-workspace-surface, var(--tms-surface, var(--smis-surface)));
+    border: 1px solid var(--mobile-workspace-line, var(--tms-line, var(--smis-line)));
+    border-radius: var(--mobile-workspace-card-radius, 20px);
+  }
+
+  .mobile-group-title {
+    display: block;
+    margin: 0 0 8px;
+    color: var(--mobile-workspace-ink, var(--tms-text-strong, var(--smis-text-strong)));
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .mobile-row,
+  .mobile-row.mobile-action {
+    position: relative;
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: max(48px, var(--mobile-workspace-action-height, 48px));
+    box-sizing: border-box;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    padding: 10px var(--mobile-row-inset, 16px);
+    border: 0;
+    border-radius: 0;
+    color: var(--mobile-workspace-ink, var(--tms-text-strong, var(--smis-text-strong)));
+    background: transparent;
+    font: inherit;
+    line-height: 1.4;
+    text-align: start;
+  }
+
+  .mobile-row::after {
+    border: 0;
+  }
+
+  .mobile-group > .mobile-row + .mobile-row::before {
+    position: absolute;
+    inset: 0 var(--mobile-row-inset) auto;
+    border-top: 1px solid var(--mobile-workspace-line, var(--tms-line, var(--smis-line)));
+    content: '';
+    pointer-events: none;
+  }
+
+  .mobile-row:not(.mobile-row--static):not(:disabled):active {
+    background: var(--mobile-workspace-canvas, var(--tms-surface-soft, var(--smis-surface-soft)));
+  }
+
+  .mobile-row:focus-visible {
+    z-index: 1;
+    outline: 2px solid var(--mobile-workspace-focus, var(--tms-primary, var(--smis-primary)));
+    outline-offset: -3px;
+  }
+
+  .mobile-row__body {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+    gap: 3px;
+    overflow-wrap: anywhere;
+    text-align: start;
+  }
+
+  .mobile-row__label {
+    color: var(--mobile-workspace-ink, var(--tms-text-strong, var(--smis-text-strong)));
+    font-size: 15px;
+    font-weight: 650;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-row__detail {
+    color: var(--mobile-workspace-muted, var(--tms-text-secondary, var(--smis-text-secondary)));
+    font-size: 13px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-row__icon {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    place-items: center;
+    border-radius: 10px;
+    color: var(--mobile-workspace-accent, var(--tms-primary, var(--smis-primary)));
+    background: var(--tms-primary-soft, var(--smis-primary-soft));
+  }
+
+  .mobile-row__trailing {
+    min-width: 0;
+    flex: 0 0 auto;
+    color: var(--mobile-workspace-muted, var(--tms-text-secondary, var(--smis-text-secondary)));
+    text-align: end;
+  }
+
+  .mobile-row__trailing.mobile-row__value {
+    flex-shrink: 1;
+    max-width: 65%;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mobile-row__chevron {
+    flex-shrink: 0;
+    color: var(--mobile-workspace-muted, var(--tms-text-secondary, var(--smis-text-secondary)));
+  }
+}

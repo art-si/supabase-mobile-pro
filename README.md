@@ -25,6 +25,24 @@ pnpm dev:h5:driver
 
 用 `pnpm dev:mp-weixin <应用>` 启动指定端的小程序。`pnpm modules:check` 对三个应用做类型检查，`pnpm modules:build` 构建三端的 H5 和微信小程序。也可用 `pnpm build:h5 <应用>` 或 `pnpm build:mp-weixin <应用>` 单独构建。产物写入各子仓原有位置。
 
+## Android 调试包
+
+司机端和货主端沿用 Note 项目的 Capacitor 8 方案。Android 应用从包内加载各自的 Uni-app H5 产物，使用子仓的 H5 环境配置。请使用 HTTPS 服务地址。调试包使用本机 Gradle 默认调试证书。
+
+安装 JDK 21、Android SDK Platform 36 和 Build-Tools 35.0.0，然后设置 `JAVA_HOME` 和 `ANDROID_HOME`。在主仓执行：
+
+```sh
+pnpm modules:install
+pnpm build:android driver
+pnpm build:android shipper
+```
+
+也可以直接运行 `pnpm build:android` 构建两个应用。调试 APK 分别写入 `artifacts/android/driver/` 和 `artifacts/android/shipper/`，包名分别为 `com.artsi.tms.driver.debug` 和 `com.artsi.tms.shipper.debug`。APK 版本取自各子仓的 `src/manifest.json`。
+
+默认使用生成工程的 Gradle Wrapper。如果下载 Gradle 受限，可把 `GRADLE_HOME` 指向本机已安装的同版本 Gradle（当前为 8.14.3）。
+
+如需在 Android Studio 中调试，运行 `pnpm android:sync driver` 或 `pnpm android:sync shipper`，再打开相应子仓的 `dist/mobile-pro-android/android`。工程由主仓脚本生成，共用原生资源维护在 `scripts/android/`。
+
 ## 公共样式
 
 在 `packages/mobile-core/src` 修改公共实现。三端从同一套 Sass 样式获取主题色、字体、卡片、按钮和表单控件样式。主题选择沿用各自的缓存键，图标字体沿用各自的图标集。业务页面的专有样式放在所在子仓。

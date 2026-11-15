@@ -10,20 +10,19 @@ export const THEME_PRESETS = [
 export type ThemePresetId = (typeof THEME_PRESETS)[number]['id']
 export type MobileStatusTone = 'blue' | 'green' | 'orange' | 'red' | 'gray'
 
-const defaultPreset = THEME_PRESETS[0]
-
-function savedPreset(storageKey: string): ThemePresetId {
+function savedPreset(storageKey: string, fallback: ThemePresetId): ThemePresetId {
   try {
     const value: unknown = uni.getStorageSync(storageKey)
-    return THEME_PRESETS.find((preset) => preset.id === value)?.id ?? defaultPreset.id
+    return THEME_PRESETS.find((preset) => preset.id === value)?.id ?? fallback
   } catch {
-    return defaultPreset.id
+    return fallback
   }
 }
 
-export function createThemeStore(storageKey: string) {
+export function createThemeStore(storageKey: string, defaultPresetId: ThemePresetId = 'indigo') {
+  const defaultPreset = THEME_PRESETS.find((preset) => preset.id === defaultPresetId) ?? THEME_PRESETS[0]
   return defineStore('theme', {
-    state: () => ({ preset: savedPreset(storageKey) }),
+    state: () => ({ preset: savedPreset(storageKey, defaultPreset.id) }),
     getters: {
       // Native map polylines need a hex color.
       mapColor: (state) => THEME_PRESETS.find((preset) => preset.id === state.preset)?.color ?? defaultPreset.color

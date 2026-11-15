@@ -20,6 +20,17 @@ function go(value: string | number) {
   if (item.action) emit('action', item.key)
   else if (item.url) uni.reLaunch({ url: item.url })
 }
+
+function preventActivation(event: KeyboardEvent) {
+  if (event.key !== 'Enter' && event.key !== ' ') return false
+  event.preventDefault()
+  event.stopPropagation()
+  return true
+}
+
+function activateFromKeyboard(event: KeyboardEvent, key: string) {
+  if (preventActivation(event)) go(key)
+}
 </script>
 
 <template>
@@ -42,8 +53,8 @@ function go(value: string | number) {
         :aria-current="item.key === props.active ? 'page' : undefined"
         :role="item.action ? 'button' : 'link'"
         tabindex="0"
-        @keydown.enter="go(item.key)"
-        @keydown.space.prevent="go(item.key)"
+        @keydown="preventActivation"
+        @keyup="activateFromKeyboard($event, item.key)"
       >
         <view class="bottom-nav__content">
           <view v-if="item.key === props.active" class="bottom-nav__active-pill" />
@@ -63,20 +74,22 @@ function go(value: string | number) {
 <style scoped lang="scss">
 .bottom-nav {
   position: fixed;
-  left: 18rpx;
-  right: 18rpx;
-  bottom: calc(14rpx + env(safe-area-inset-bottom));
+  left: var(--mobile-nav-inset, 18rpx);
+  right: var(--mobile-nav-inset, 18rpx);
+  bottom: var(--mobile-nav-bottom, calc(var(--mobile-nav-inset, 14rpx) + var(--mobile-safe-bottom, 0px)));
   z-index: 20;
-  height: var(--smis-nav-height, 132rpx);
-  padding: 12rpx 18rpx;
+  height: var(--mobile-nav-height, var(--smis-nav-height, 132rpx));
+  padding: var(--mobile-nav-padding, 12rpx 18rpx);
+  box-sizing: var(--mobile-nav-box-sizing, content-box);
   overflow: hidden;
-  background: var(--tms-material-thin, var(--smis-material-thin));
-  border: 1rpx solid rgba(255, 255, 255, 0.7);
-  border-radius: 32rpx;
-  backdrop-filter: blur(28rpx) saturate(150%);
-  -webkit-backdrop-filter: blur(28rpx) saturate(150%);
+  background: var(--mobile-nav-background, var(--tms-material-thin, var(--smis-material-thin)));
+  border: 1rpx solid var(--mobile-nav-border, rgba(255, 255, 255, 0.7));
+  border-width: var(--mobile-nav-border-width, 1rpx);
+  border-radius: var(--mobile-nav-radius, 32rpx);
+  backdrop-filter: var(--mobile-nav-backdrop, blur(28rpx) saturate(150%));
+  -webkit-backdrop-filter: var(--mobile-nav-backdrop, blur(28rpx) saturate(150%));
   display: block;
-  box-shadow: var(--tms-shadow-floating, var(--smis-shadow-floating)), 0 2rpx 0 rgba(255, 255, 255, 0.9) inset;
+  box-shadow: var(--mobile-nav-shadow, var(--tms-shadow-floating, var(--smis-shadow-floating)), 0 2rpx 0 rgba(255, 255, 255, 0.9) inset);
 }
 
 :deep(.bottom-nav__bar) {
@@ -97,13 +110,13 @@ function go(value: string | number) {
   background: transparent;
   min-width: 0;
   min-height: 44px;
-  color: var(--tms-disabled, var(--smis-disabled));
+  color: var(--mobile-nav-inactive-color, var(--tms-disabled, var(--smis-disabled)));
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2rpx;
-  font-size: max(24rpx, 12px);
+  font-size: var(--mobile-nav-label-size, max(24rpx, 12px));
   font-weight: 600;
   line-height: 1.1;
   touch-action: manipulation;
@@ -127,12 +140,13 @@ function go(value: string | number) {
 }
 
 .bottom-nav__active-pill {
+  display: var(--mobile-nav-active-decoration, block);
   position: absolute;
-  top: 3rpx;
-  width: 74rpx;
-  height: 60rpx;
+  top: var(--mobile-nav-selected-top, 3rpx);
+  width: var(--mobile-nav-selected-width, 74rpx);
+  height: var(--mobile-nav-selected-height, 60rpx);
   border-radius: 20rpx;
-  background: linear-gradient(180deg, var(--tms-primary-soft, var(--smis-primary-soft)), var(--tms-primary-soft-strong, var(--smis-primary-soft-strong)));
+  background: var(--mobile-nav-selected-fill, linear-gradient(180deg, var(--tms-primary-soft, var(--smis-primary-soft)), var(--tms-primary-soft-strong, var(--smis-primary-soft-strong))));
 }
 
 .bottom-nav__content {
@@ -150,8 +164,8 @@ function go(value: string | number) {
 .bottom-nav__icon-box {
   position: relative;
   z-index: 1;
-  width: 62rpx;
-  height: 62rpx;
+  width: var(--mobile-nav-icon-box, 62rpx);
+  height: var(--mobile-nav-icon-box, 62rpx);
   border-radius: 18rpx;
   color: currentColor;
   display: flex;
@@ -160,7 +174,7 @@ function go(value: string | number) {
 }
 
 .bottom-nav__label {
-  color: var(--tms-muted, var(--smis-muted));
+  color: var(--mobile-nav-label-color, var(--tms-muted, var(--smis-muted)));
 }
 
 .bottom-nav__icon-box--active,
@@ -169,9 +183,11 @@ function go(value: string | number) {
 }
 
 .bottom-nav__icon-box--action {
+  width: var(--mobile-nav-action-size, var(--mobile-nav-icon-box, 62rpx));
+  height: var(--mobile-nav-action-size, var(--mobile-nav-icon-box, 62rpx));
   color: #fff;
   background: var(--tms-primary, var(--smis-primary));
-  border-radius: 20rpx;
+  border-radius: var(--mobile-nav-action-radius, 20rpx);
 }
 .bottom-nav__label--active {
   font-weight: 700;
@@ -203,7 +219,7 @@ function go(value: string | number) {
   .bottom-nav {
     left: 50%;
     right: auto;
-    width: min(calc(100vw - 36rpx), 484px);
+    width: var(--mobile-nav-desktop-width, min(calc(100vw - 36rpx), 484px));
     transform: translateX(-50%);
   }
 }

@@ -1,0 +1,24 @@
+@mixin control {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--tms-control-height, var(--smis-control-height, 44px));
+  padding: 0 12px;
+  border: 1px solid var(--tms-line, var(--smis-line, #d1d5db));
+  border-radius: var(--tms-control-radius, var(--smis-control-radius, 10px));
+  background: var(--tms-surface-soft, var(--smis-surface-soft, #f8f8fa));
+  color: var(--tms-text, var(--smis-text, #152033));
+  font: inherit;
+  font-size: max(28rpx, 16px);
+  line-height: 1.4;
+  scroll-margin-block-end: 100px;
+}
+
+@mixin focus {
+  outline: 2px solid var(--tms-primary, var(--smis-primary, #0f766e));
+  outline-offset: 1px;
+}
+
+@mixin error-border {
+  border-color: var(--tms-red-strong, var(--smis-red-strong, #b42318));
+}
