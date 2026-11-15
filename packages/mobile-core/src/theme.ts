@@ -8,6 +8,7 @@ export const THEME_PRESETS = [
 ] as const
 
 export type ThemePresetId = (typeof THEME_PRESETS)[number]['id']
+export type MobileStatusTone = 'blue' | 'green' | 'orange' | 'red' | 'gray'
 
 const defaultPreset = THEME_PRESETS[0]
 

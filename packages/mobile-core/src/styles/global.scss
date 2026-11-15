@@ -1,18 +1,12 @@
 @use '@wot-ui/ui/styles/theme/index.scss' as *;
 @use './presets.scss';
 @use './font.scss';
+@use './icons.scss';
 
-@mixin apply($prefix, $icon-family, $icon-path) {
+@mixin apply($prefix) {
   @include presets.apply($prefix);
   @include font.embed();
-
-  @font-face {
-    font-family: $icon-family;
-    src: url('#{$icon-path}') format('truetype');
-    font-style: normal;
-    font-weight: 400;
-    font-display: block;
-  }
+  @include icons.embed();
 
   :root,
   page,

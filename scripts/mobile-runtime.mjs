@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path'
 
 const sourceDirectory = resolve(import.meta.dirname, '../packages/mobile-core/src')
 const fontLicense = resolve(sourceDirectory, '../assets/fonts/NotoSansSC-OFL.txt')
+const iconLicense = resolve(sourceDirectory, '../assets/fonts/BootstrapIcons-MIT.txt')
 const generatedMarker = '.mobile-pro-generated'
 
 function writeIfChanged(from, to) {
@@ -56,6 +57,7 @@ export function prepareMobileCore(applicationRoot) {
   const staticFonts = join(appSource, 'static', 'fonts')
   mkdirSync(staticFonts, { recursive: true })
   writeIfChanged(fontLicense, join(staticFonts, 'NotoSansSC-OFL.txt'))
+  writeIfChanged(iconLicense, join(staticFonts, 'BootstrapIcons-MIT.txt'))
   return directory
 }
 
