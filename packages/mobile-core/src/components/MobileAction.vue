@@ -1,7 +1,12 @@
 <script setup lang="ts">
 defineOptions({ options: { virtualHost: true, styleIsolation: 'apply-shared' } })
 
-const props = defineProps<{ disabled?: boolean; variant?: 'plain' | 'link' }>()
+const props = withDefaults(defineProps<{
+  disabled?: boolean
+  variant?: 'plain' | 'link'
+  ariaLabel?: string
+  ariaPressed?: boolean
+}>(), { ariaPressed: undefined })
 const emit = defineEmits<{ click: [] }>()
 
 function activate() {
@@ -28,6 +33,8 @@ function activateFromKeyboard(event: KeyboardEvent) {
     :tabindex="disabled ? -1 : 0"
     :disabled="disabled"
     :aria-disabled="disabled || undefined"
+    :aria-label="ariaLabel"
+    :aria-pressed="ariaPressed"
     hover-class="mobile-action--pressed"
     @click="activate"
     @keydown="preventDefaultActivation"

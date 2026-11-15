@@ -107,7 +107,7 @@
     line-height: 1.2;
   }
 
-  /* 业务操作按钮。custom-class 会直接落到 wd-button 的真实 button 节点。 */
+  /* 主操作在原生 MobileAction 和 Wot 按钮内使用同一高度与对齐。 */
   .#{$prefix}-primary-action,
   .#{$prefix}-secondary-action,
   .#{$prefix}-danger-action {
@@ -124,6 +124,15 @@
       box-shadow var(--#{$prefix}-apple-duration-standard) var(--#{$prefix}-apple-ease),
       background-color var(--#{$prefix}-apple-duration-standard) var(--#{$prefix}-apple-ease),
       border-color var(--#{$prefix}-apple-duration-standard) var(--#{$prefix}-apple-ease);
+  }
+
+  .mobile-action.#{$prefix}-primary-action,
+  .mobile-action.#{$prefix}-secondary-action,
+  .mobile-action.#{$prefix}-danger-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10rpx;
   }
 
   .#{$prefix}-secondary-action::after,

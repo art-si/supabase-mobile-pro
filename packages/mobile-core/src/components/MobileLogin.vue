@@ -293,13 +293,13 @@ function forgotPassword() {
           登录
         </wd-button>
       </view>
-      <view v-if="demo" class="login-form__demo">
+      <view v-if="!!demo" class="login-form__demo">
         <MobileAction variant="link" :disabled="loading" @click="demo">进入演示</MobileAction>
       </view>
     </view>
 
     <!-- #ifdef MP-WEIXIN -->
-    <view v-if="authenticatePhone" class="login-page__phone-wrap">
+    <view v-if="!!authenticatePhone" class="login-page__phone-wrap">
       <wd-button
         open-type="getPhoneNumber"
         variant="text"

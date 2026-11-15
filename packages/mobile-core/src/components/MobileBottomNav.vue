@@ -167,14 +167,20 @@ function activateFromKeyboard(event: KeyboardEvent, key: string) {
   width: var(--mobile-nav-icon-box, 62rpx);
   height: var(--mobile-nav-icon-box, 62rpx);
   border-radius: 18rpx;
-  color: currentColor;
+  flex: none;
+  color: var(--mobile-nav-inactive-color, var(--tms-disabled, var(--smis-disabled)));
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .bottom-nav__label {
+  flex: none;
   color: var(--mobile-nav-label-color, var(--tms-muted, var(--smis-muted)));
+  font-size: var(--mobile-nav-label-size, max(24rpx, 12px));
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
 .bottom-nav__icon-box--active,

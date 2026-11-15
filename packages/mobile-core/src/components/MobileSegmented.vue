@@ -1,6 +1,8 @@
 <script setup lang="ts" generic="Value extends string">
 import MobileAction from './MobileAction.vue'
 
+defineOptions({ options: { styleIsolation: 'shared' } })
+
 const props = defineProps<{
   label: string
   modelValue: Value

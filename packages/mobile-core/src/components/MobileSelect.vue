@@ -4,6 +4,8 @@ import MobileAction from './MobileAction.vue'
 import MobileIcon from './MobileIcon.vue'
 import { systemInsetsKey } from '../system-insets'
 
+defineOptions({ options: { styleIsolation: 'shared' } })
+
 const props = defineProps<{
   options: readonly { id: string; name: string }[]
   label: string

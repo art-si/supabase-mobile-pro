@@ -2,6 +2,8 @@
 import MobileAction from './MobileAction.vue'
 import MobileIcon from './MobileIcon.vue'
 
+defineOptions({ options: { styleIsolation: 'shared' } })
+
 const props = withDefaults(defineProps<{
   images: readonly string[]
   label: string

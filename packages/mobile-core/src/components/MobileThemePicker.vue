@@ -3,6 +3,8 @@ import { THEME_PRESETS, type ThemePresetId } from '../theme'
 import MobileAction from './MobileAction.vue'
 import MobileIcon from './MobileIcon.vue'
 
+defineOptions({ options: { styleIsolation: 'shared' } })
+
 defineProps<{ modelValue: ThemePresetId }>()
 const emit = defineEmits<{ 'update:modelValue': [preset: ThemePresetId] }>()
 </script>

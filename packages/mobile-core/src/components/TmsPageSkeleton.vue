@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import MobileAction from './MobileAction.vue'
+
+defineOptions({ options: { styleIsolation: 'shared' } })
+
 withDefaults(
   defineProps<{
     label?: string
@@ -27,7 +31,7 @@ defineEmits<{
       <view class="page-skeleton__error-icon">!</view>
       <text class="page-skeleton__error-title">页面加载失败</text>
       <text class="page-skeleton__error-message">{{ error }}</text>
-      <button class="page-skeleton__retry" @click="$emit('retry')">重新加载</button>
+      <MobileAction variant="link" class="page-skeleton__retry" @click="$emit('retry')">重新加载</MobileAction>
     </view>
     <template v-else>
     <view class="page-skeleton__status">
@@ -58,7 +62,7 @@ defineEmits<{
 
 <style scoped lang="scss">
 .page-skeleton {
-  padding: 24rpx 26rpx 56rpx;
+  padding: 24rpx var(--mobile-skeleton-inline-padding, 26rpx) 56rpx;
 }
 
 .page-skeleton__error {
@@ -110,18 +114,8 @@ defineEmits<{
   line-height: 1.65;
 }
 
-.page-skeleton__retry {
-  height: var(--tms-control-height);
+.page-skeleton__error .page-skeleton__retry {
   margin-top: 30rpx;
-  padding: 0 40rpx;
-  border: 0;
-  border-radius: var(--tms-control-radius);
-  color: #fff;
-  background: var(--tms-primary);
-  box-shadow: var(--tms-shadow-primary);
-  font-size: var(--tms-control-font-size);
-  font-weight: 700;
-  line-height: var(--tms-control-height);
 }
 
 .page-skeleton__status {
