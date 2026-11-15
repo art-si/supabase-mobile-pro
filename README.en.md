@@ -8,8 +8,10 @@ Use Node.js 22.13 or later and the pnpm version pinned in `package.json`.
 git clone --recurse-submodules https://gitee.com/art-si/supabase-mobile-pro.git
 cd supabase-mobile-pro
 pnpm modules:install
-pnpm dev:h5 driver
+pnpm dev:h5:driver
 ```
+
+Run `pnpm dev:h5:driver`, `pnpm dev:h5:shipper`, or `pnpm dev:h5:smis` from the main repository. `pnpm dev:h5` defaults to the driver app. Use `pnpm.cmd run dev:h5:driver` if Windows PowerShell blocks `pnpm.ps1`.
 
 Use `driver`, `shipper`, or `smis` with `pnpm dev:h5`, `pnpm dev:mp-weixin`, `pnpm build:h5`, or `pnpm build:mp-weixin`. `pnpm modules:check` checks types and `pnpm modules:build` builds both platforms for all three apps. Each app keeps its own dependency installation, lockfile, environment configuration, and output locations.
 

@@ -10,7 +10,7 @@
 git clone --recurse-submodules https://gitee.com/art-si/supabase-mobile-pro.git
 cd supabase-mobile-pro
 pnpm modules:install
-pnpm dev:h5 driver
+pnpm dev:h5:driver
 ```
 
 已有主仓检出可用 `pnpm modules:init` 初始化或同步到主仓记录的子仓版本。各应用使用自己的依赖目录、锁文件和环境配置。环境配置参见对应应用的 README。
@@ -21,7 +21,9 @@ pnpm dev:h5 driver
 | `shipper` | `modules/supabase-mobile-tms-shipper` |
 | `smis` | `modules/supabase-mobile-smis` |
 
-用 `pnpm dev:h5 <应用>` 或 `pnpm dev:mp-weixin <应用>` 启动指定端。`pnpm modules:check` 对三个应用做类型检查，`pnpm modules:build` 构建三端的 H5 和微信小程序。也可用 `pnpm build:h5 <应用>` 或 `pnpm build:mp-weixin <应用>` 单独构建。产物写入各子仓原有位置。
+主仓的 `package.json` 提供 `dev:h5:driver`、`dev:h5:shipper` 和 `dev:h5:smis` 三个可直接运行的脚本。`pnpm dev:h5` 默认启动司机端，`pnpm dev:h5 <应用>` 可以指定其他端。如果 PowerShell 拦截 `pnpm.ps1`，请在主仓终端运行 `pnpm.cmd run dev:h5:driver`。
+
+用 `pnpm dev:mp-weixin <应用>` 启动指定端的小程序。`pnpm modules:check` 对三个应用做类型检查，`pnpm modules:build` 构建三端的 H5 和微信小程序。也可用 `pnpm build:h5 <应用>` 或 `pnpm build:mp-weixin <应用>` 单独构建。产物写入各子仓原有位置。
 
 ## 公共样式
 

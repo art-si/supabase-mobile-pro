@@ -9,7 +9,9 @@ const applications = new Map([
   ['smis', 'supabase-mobile-smis']
 ])
 
-const [command, application, ...args] = process.argv.slice(2)
+const [command, ...args] = process.argv.slice(2)
+const requestedApplication = args[0] && !args[0].startsWith('-') ? args.shift() : undefined
+const application = requestedApplication ?? (command === 'dev:h5' ? 'driver' : undefined)
 const pnpm = process.env.npm_execpath
 if (!pnpm) throw new Error('请从主仓通过 pnpm 运行此命令。')
 if ((command.startsWith('dev:') && !application) || (application && !applications.has(application))) {
