@@ -2,6 +2,7 @@
 import { THEME_PRESETS, type ThemePresetId } from '../theme'
 import MobileAction from './MobileAction.vue'
 import MobileIcon from './MobileIcon.vue'
+import MobileInlineLabel from './MobileInlineLabel.vue'
 
 defineOptions({ options: { styleIsolation: 'shared' } })
 
@@ -12,8 +13,7 @@ const emit = defineEmits<{ 'update:modelValue': [preset: ThemePresetId] }>()
 <template>
   <view class="theme-picker mobile-row mobile-row--static" role="group" aria-label="主题色">
     <view class="theme-picker__label">
-      <MobileIcon name="settings" size="20px" />
-      <text>主题色</text>
+      <MobileInlineLabel icon="settings" icon-size="20px" label="主题色" />
     </view>
     <view class="theme-picker__options">
       <MobileAction
@@ -41,13 +41,12 @@ const emit = defineEmits<{ 'update:modelValue': [preset: ThemePresetId] }>()
   padding-block: 8px;
 }
 
-.theme-picker__label,
 .theme-picker__options {
   display: flex;
   align-items: center;
 }
 
-.theme-picker__label { gap: 9px; font-size: 15px; font-weight: 650; }
+.theme-picker__label { --mobile-inline-pair-gap: 9px; font-size: 15px; font-weight: 650; }
 .theme-picker__options { gap: 6px; }
 
 .theme-picker__choice {

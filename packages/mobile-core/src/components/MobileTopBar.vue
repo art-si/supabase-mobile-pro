@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { inject } from 'vue'
+import { activateActionKey, preventActionKey } from '../action-keyboard'
+import { systemInsetsKey, useSystemInsets } from '../system-insets'
 import MobileIcon from './MobileIcon.vue'
 
 defineOptions({ options: { styleIsolation: 'apply-shared' } })
@@ -12,6 +15,7 @@ const props = withDefaults(
     showMenu?: boolean
     menuIcon?: string
     menuLabel?: string
+    backFallback?: string
     confirmBack?: () => Promise<boolean>
     capsule?: 'with-meta' | 'always' | 'none'
   }>(),
@@ -25,6 +29,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{ menu: [] }>()
+const systemInsets = inject(systemInsetsKey, useSystemInsets, true)
 
 async function back() {
   if (props.confirmBack && !(await props.confirmBack())) return
@@ -32,23 +37,7 @@ async function back() {
     uni.navigateBack()
     return
   }
-  uni.reLaunch({ url: '/pages/home/index' })
-}
-
-function isActivationKey(event: KeyboardEvent) {
-  return event.key === 'Enter' || event.key === ' '
-}
-
-function preventDefaultActivation(event: KeyboardEvent) {
-  if (isActivationKey(event)) event.preventDefault()
-}
-
-function activateFromKeyboard(event: KeyboardEvent, action: () => void) {
-  if (!isActivationKey(event)) return
-  event.preventDefault()
-  // Uni dialogs handle Enter at document level. Keep activation on this control.
-  event.stopPropagation()
-  action()
+  uni.reLaunch({ url: props.backFallback || '/pages/home/index' })
 }
 
 function menu() {
@@ -59,6 +48,7 @@ function menu() {
 <template>
   <view
     class="top-bar"
+    :style="systemInsets"
     :class="{
       'top-bar--with-meta': capsule === 'with-meta' && (eyebrow || subtitle),
       'top-bar--reserve-capsule': capsule === 'always'
@@ -67,14 +57,14 @@ function menu() {
     <view class="top-bar__glow" aria-hidden="true" />
     <button
       v-if="showBack"
-      class="top-bar__icon top-bar__icon--leading"
+      class="mobile-action mobile-action--icon top-bar__icon top-bar__icon--leading"
       aria-label="返回上一页"
       hover-class="top-bar__icon--pressed"
       role="button"
       tabindex="0"
       @click="back"
-      @keydown="preventDefaultActivation"
-      @keyup="activateFromKeyboard($event, back)"
+      @keydown="preventActionKey"
+      @keyup="activateActionKey($event, back)"
     >
       <MobileIcon name="back" size="38rpx" />
     </button>
@@ -86,14 +76,14 @@ function menu() {
     </view>
     <button
       v-if="showMenu"
-      class="top-bar__icon top-bar__icon--trailing"
+      class="mobile-action mobile-action--icon top-bar__icon top-bar__icon--trailing"
       :aria-label="menuLabel"
       hover-class="top-bar__icon--pressed"
       role="button"
       tabindex="0"
       @click="menu"
-      @keydown="preventDefaultActivation"
-      @keyup="activateFromKeyboard($event, menu)"
+      @keydown="preventActionKey"
+      @keyup="activateActionKey($event, menu)"
     >
       <MobileIcon :name="menuIcon" size="38rpx" />
     </button>
@@ -122,6 +112,21 @@ function menu() {
 .top-bar--with-meta,
 .top-bar--reserve-capsule {
   min-height: var(--mobile-header-min-height, 250rpx);
+}
+
+// Page content scrolls beneath the native status bar and capsule.
+.top-bar--with-meta::before,
+.top-bar--reserve-capsule::before {
+  position: fixed;
+  z-index: 3;
+  inset: 0 0 auto;
+  width: 100%;
+  max-width: var(--mobile-workspace-max-width, 560px);
+  height: var(--mobile-capsule-top);
+  margin-inline: auto;
+  background: var(--mobile-workspace-canvas, #f2f3f6);
+  content: '';
+  pointer-events: none;
 }
 
 .top-bar--with-meta {
@@ -195,7 +200,8 @@ function menu() {
   margin-top: 5rpx;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: var(--mobile-header-subtitle-wrap, nowrap);
+  overflow-wrap: anywhere;
   font-size: max(22rpx, 12px);
   font-weight: 600;
   color: var(--mobile-header-meta-color, inherit);
@@ -208,8 +214,6 @@ function menu() {
   z-index: 1;
   width: var(--mobile-header-accessory-size, 88rpx);
   height: var(--mobile-header-accessory-size, 88rpx);
-  min-width: 44px;
-  min-height: 44px;
 }
 
 .top-bar__spacer {
@@ -219,19 +223,13 @@ function menu() {
   min-height: var(--mobile-header-placeholder, 44px);
 }
 
-.top-bar__icon {
-  margin: 0;
-  padding: 0;
+.mobile-action.top-bar__icon {
   color: var(--mobile-header-accessory-color, #fff);
   background: var(--mobile-header-accessory-background, rgba(255, 255, 255, 0.13));
   backdrop-filter: blur(16rpx);
   -webkit-backdrop-filter: blur(16rpx);
   border: 1rpx solid var(--mobile-header-accessory-border, rgba(255, 255, 255, 0.18));
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  touch-action: manipulation;
   transition:
     transform var(--top-bar-fast-duration) var(--top-bar-ease),
     background-color var(--top-bar-standard-duration) var(--top-bar-ease),
@@ -240,10 +238,6 @@ function menu() {
 
 .top-bar__icon--leading { margin-inline-end: var(--mobile-header-accessory-gap, 0px); }
 .top-bar__icon--trailing { margin-inline-start: var(--mobile-header-accessory-gap, 0px); }
-
-.top-bar__icon::after {
-  border: 0;
-}
 
 .top-bar__icon--pressed {
   background: var(--mobile-header-pressed-background, rgba(255, 255, 255, 0.22));

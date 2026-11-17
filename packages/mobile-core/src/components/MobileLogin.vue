@@ -2,7 +2,10 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import MobileAction from './MobileAction.vue'
 import MobileIcon from './MobileIcon.vue'
+import { activateActionKey, preventActionKey } from '../action-keyboard'
+import { nativeFieldOf, useNativeFieldAttributes } from '../form-focus'
 import { useSystemInsets } from '../system-insets'
+import { wechatPhoneCode, type WechatPhoneEvent } from '../wechat-phone-login'
 
 defineOptions({ options: { styleIsolation: 'apply-shared' } })
 
@@ -37,14 +40,39 @@ const systemInsets = useSystemInsets()
 
 const account = ref('')
 const password = ref('')
+const passwordVisible = ref(false)
 const remember = ref(true)
 const loading = ref(false)
 const phoneLoading = ref(false)
+const phoneError = ref('')
 const accountError = ref('')
 const passwordError = ref('')
 const loginError = ref('')
-const focusField = ref<'account' | 'password' | ''>('')
-const inputStyle = 'box-sizing: border-box; width: 100%; height: 100%; --wot-input-padding: 0 24rpx; --wot-input-bg: transparent; --wot-input-inner-height: 88rpx; --wot-input-inner-font-size: 28rpx; --wot-input-inner-color: #172033; --wot-input-inner-placeholder-color: #98a3b5;'
+type LoginField = 'account' | 'password'
+const focusField = ref<LoginField | ''>('')
+const fieldIds = { account: 'mobile-login-account', password: 'mobile-login-password' }
+const accountDescription = computed(() => accountError.value ? 'mobile-login-hint mobile-login-account-error' : 'mobile-login-hint')
+const passwordDescription = computed(() => passwordError.value ? 'mobile-login-password-error' : undefined)
+const accountControl = useNativeFieldAttributes(() => ({
+  id: labelTarget('account'),
+  name: 'username',
+  'aria-label': props.accountLabel,
+  'aria-invalid': accountError.value ? 'true' : undefined,
+  'aria-required': 'true',
+  'aria-describedby': accountDescription.value,
+  autocomplete: 'username',
+  autocapitalize: 'off',
+  spellcheck: 'false'
+}))
+const passwordControl = useNativeFieldAttributes(() => ({
+  id: labelTarget('password'),
+  name: 'password',
+  'aria-label': '登录密码',
+  'aria-invalid': passwordError.value ? 'true' : undefined,
+  'aria-required': 'true',
+  'aria-describedby': passwordDescription.value,
+  autocomplete: 'current-password'
+}))
 
 const themeTokens = [
   'primary-rgb',
@@ -75,11 +103,34 @@ const themeVariables = computed(() => Object.fromEntries(themeTokens.map((token)
 watch(account, () => { accountError.value = ''; loginError.value = '' })
 watch(password, () => { passwordError.value = ''; loginError.value = '' })
 
-// #ifdef H5
-function loginInputs() {
-  return document.querySelectorAll<HTMLInputElement>('#mobile-login-form input')
+function labelTarget(field: LoginField) {
+  // #ifdef H5
+  return fieldIds[field] + '-input'
+  // #endif
+  return fieldIds[field]
 }
-// #endif
+
+function focusInput(field: LoginField) {
+  if (loading.value) return
+  focusField.value = field
+  // #ifdef H5
+  nativeFieldOf(field === 'account' ? accountControl.value : passwordControl.value)?.focus()
+  // #endif
+}
+
+function blurInput(field: LoginField) {
+  if (focusField.value === field) focusField.value = ''
+}
+
+function clearAccount() {
+  if (loading.value) return
+  account.value = ''
+  focusInput('account')
+}
+
+function togglePassword() {
+  if (!loading.value) passwordVisible.value = !passwordVisible.value
+}
 
 onMounted(() => {
   try {
@@ -88,13 +139,6 @@ onMounted(() => {
   } catch {
     // The login form remains usable when the device disables local storage.
   }
-  // #ifdef H5
-  const inputs = loginInputs()
-  inputs[0]?.setAttribute('autocomplete', 'username')
-  inputs[0]?.setAttribute('name', 'username')
-  inputs[1]?.setAttribute('autocomplete', 'current-password')
-  inputs[1]?.setAttribute('name', 'password')
-  // #endif
 })
 
 function saveAccount(value: string) {
@@ -112,9 +156,8 @@ async function submit() {
   let secret = password.value
   // #ifdef H5
   // Uni's H5 input sync is throttled. Use the visible text on immediate submit/autofill.
-  const inputs = loginInputs()
-  identifier = inputs[0]?.value ?? identifier
-  secret = inputs[1]?.value ?? secret
+  identifier = nativeFieldOf(accountControl.value)?.value ?? identifier
+  secret = nativeFieldOf(passwordControl.value)?.value ?? secret
   // #endif
   const value = identifier.trim()
   accountError.value = value ? (props.validateAccount?.(value) ?? '') : '请输入' + props.accountLabel
@@ -123,7 +166,7 @@ async function submit() {
   focusField.value = ''
   if (accountError.value || passwordError.value) {
     await nextTick()
-    focusField.value = accountError.value ? 'account' : 'password'
+    focusInput(accountError.value ? 'account' : 'password')
     return
   }
   loading.value = true
@@ -131,6 +174,7 @@ async function submit() {
     await props.authenticate(value, secret)
     saveAccount(value)
     password.value = ''
+    passwordVisible.value = false
     emit('success')
   } catch (error) {
     loginError.value = props.explainError(error)
@@ -140,19 +184,22 @@ async function submit() {
 }
 
 // #ifdef MP-WEIXIN
-async function phoneLogin(event?: { code?: string; detail?: { code?: string } }) {
+async function phoneLogin(event?: WechatPhoneEvent) {
   if (!props.authenticatePhone || phoneLoading.value || loading.value) return
-  const code = event?.detail?.code ?? event?.code
+  const code = wechatPhoneCode(event)
   if (!code) {
-    uni.showToast({ title: '请在微信小程序中授权手机号登录', icon: 'none' })
+    phoneError.value = '未取得手机号授权，可以重试或用账号密码登录。'
     return
   }
+  phoneError.value = ''
   phoneLoading.value = true
   try {
     await props.authenticatePhone(code)
+    password.value = ''
+    passwordVisible.value = false
     emit('success')
   } catch (error) {
-    uni.showToast({ title: props.explainError(error, 'phone'), icon: 'none' })
+    phoneError.value = props.explainError(error, 'phone')
   } finally {
     phoneLoading.value = false
   }
@@ -177,9 +224,9 @@ function forgotPassword() {
           <view class="login-page__mark" aria-hidden="true">
             <view class="login-page__mark-main" />
             <view class="login-page__mark-dots">
-              <text />
-              <text />
-              <text />
+              <text class="login-page__mark-dot login-page__mark-dot--left" />
+              <text class="login-page__mark-dot login-page__mark-dot--top" />
+              <text class="login-page__mark-dot login-page__mark-dot--bottom" />
             </view>
           </view>
         </slot>
@@ -190,7 +237,7 @@ function forgotPassword() {
       <text class="login-page__title" role="heading" aria-level="1">{{ brand.title }}</text>
       <text class="login-page__description">{{ brand.description }}</text>
       <view v-if="brand.benefits.length" class="login-page__trust">
-        <view v-for="benefit in brand.benefits" :key="benefit"><text class="login-page__trust-dot" />{{ benefit }}</view>
+        <view v-for="benefit in brand.benefits" :key="benefit" class="login-page__trust-item"><text class="login-page__trust-dot" />{{ benefit }}</view>
       </view>
     </view>
 
@@ -198,61 +245,97 @@ function forgotPassword() {
       <view class="login-form__head">
         <view>
           <text class="login-form__title" role="heading" aria-level="2">账号登录</text>
-          <text class="login-form__hint">{{ accountHint }}</text>
+          <text id="mobile-login-hint" class="login-form__hint">{{ accountHint }}</text>
         </view>
         <text class="login-form__secure">安全登录</text>
       </view>
       <view class="login-form__control" :class="{ 'login-form__control--error': accountError }">
-        <text class="login-form__label">{{ accountLabel }}</text>
+        <label class="login-form__label" :for="labelTarget('account')" @click="focusInput('account')">{{ accountLabel }}</label>
         <view class="login-form__field" :class="{ 'login-form__field--focused': focusField === 'account' }">
-          <wd-input
+          <MobileIcon name="user" size="34rpx" />
+          <input
+            :id="fieldIds.account"
+            ref="accountControl"
+            class="login-form__input"
             v-model="account"
-            :custom-style="inputStyle"
+            name="username"
             :aria-label="accountLabel"
-            :aria-invalid="Boolean(accountError)"
-            :error="Boolean(accountError)"
+            :aria-invalid="accountError ? true : undefined"
+            aria-required="true"
+            :aria-describedby="accountDescription"
             :focus="focusField === 'account'"
             :placeholder="accountPlaceholder"
-            placeholder-style="color: #98a3b5"
+            placeholder-style="color: var(--login-muted)"
             autocomplete="username"
             type="text"
             confirm-type="next"
-            clearable
-            no-border
+            :maxlength="-1"
             :disabled="loading"
             @focus="focusField = 'account'"
-            @blur="focusField = ''"
+            @blur="blurInput('account')"
+            @confirm="focusInput('password')"
+          />
+          <button
+            v-if="account"
+            class="mobile-action mobile-action--icon login-form__affordance"
+            role="button"
+            :tabindex="loading ? -1 : 0"
+            :disabled="loading"
+            :aria-disabled="loading || undefined"
+            aria-label="清除账号"
+            hover-class="mobile-action--pressed"
+            @click="clearAccount"
+            @keydown="preventActionKey"
+            @keyup="activateActionKey($event, clearAccount)"
           >
-            <template #prefix><MobileIcon name="user" size="34rpx" /></template>
-          </wd-input>
+            <wd-icon name="close-circle" size="34rpx" aria-hidden="true" />
+          </button>
         </view>
-        <text v-if="accountError" class="login-form__error" role="alert">{{ accountError }}</text>
+        <text v-if="accountError" id="mobile-login-account-error" class="login-form__error" role="alert">{{ accountError }}</text>
       </view>
       <view class="login-form__control" :class="{ 'login-form__control--error': passwordError }">
-        <text class="login-form__label">登录密码</text>
+        <label class="login-form__label" :for="labelTarget('password')" @click="focusInput('password')">登录密码</label>
         <view class="login-form__field" :class="{ 'login-form__field--focused': focusField === 'password' }">
-          <wd-input
+          <MobileIcon name="lock" size="34rpx" />
+          <input
+            :id="fieldIds.password"
+            ref="passwordControl"
+            class="login-form__input"
             v-model="password"
-            :custom-style="inputStyle"
+            name="password"
             aria-label="登录密码"
-            :aria-invalid="Boolean(passwordError)"
-            :error="Boolean(passwordError)"
+            :aria-invalid="passwordError ? true : undefined"
+            aria-required="true"
+            :aria-describedby="passwordDescription"
             :focus="focusField === 'password'"
             placeholder="请输入登录密码"
-            placeholder-style="color: #98a3b5"
+            placeholder-style="color: var(--login-muted)"
             autocomplete="current-password"
-            show-password
+            type="text"
+            :password="!passwordVisible"
             confirm-type="done"
-            no-border
+            :maxlength="-1"
             :disabled="loading"
             @focus="focusField = 'password'"
-            @blur="focusField = ''"
+            @blur="blurInput('password')"
             @confirm="submit"
+          />
+          <button
+            class="mobile-action mobile-action--icon login-form__affordance"
+            role="button"
+            :tabindex="loading ? -1 : 0"
+            :disabled="loading"
+            :aria-disabled="loading || undefined"
+            :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
+            hover-class="mobile-action--pressed"
+            @click="togglePassword"
+            @keydown="preventActionKey"
+            @keyup="activateActionKey($event, togglePassword)"
           >
-            <template #prefix><MobileIcon name="lock" size="34rpx" /></template>
-          </wd-input>
+            <wd-icon :name="passwordVisible ? 'eye' : 'eye-invisible'" size="34rpx" aria-hidden="true" />
+          </button>
         </view>
-        <text v-if="passwordError" class="login-form__error" role="alert">{{ passwordError }}</text>
+        <text v-if="passwordError" id="mobile-login-password-error" class="login-form__error" role="alert">{{ passwordError }}</text>
       </view>
       <text v-if="loginError" class="login-form__error login-form__error--server" role="alert" aria-live="polite">{{ loginError }}</text>
 
@@ -294,27 +377,27 @@ function forgotPassword() {
         </wd-button>
       </view>
       <view v-if="!!demo" class="login-form__demo">
-        <MobileAction variant="link" :disabled="loading" @click="demo">进入演示</MobileAction>
+        <MobileAction variant="link" :disabled="loading || phoneLoading" @click="demo">进入演示</MobileAction>
       </view>
     </view>
 
     <!-- #ifdef MP-WEIXIN -->
     <view v-if="!!authenticatePhone" class="login-page__phone-wrap">
-      <wd-button
+      <button
+        class="mobile-action login-page__phone-button"
         open-type="getPhoneNumber"
-        variant="text"
-        custom-style="width: 220rpx; min-width: 110px; height: 130rpx; min-height: 65px; margin: 0; padding: 0; border: 0; color: #748096; background: transparent; box-shadow: none; opacity: 1;"
-        :disabled="phoneLoading"
+        :disabled="loading || phoneLoading"
+        :aria-busy="phoneLoading || undefined"
+        hover-class="mobile-action--pressed"
         @getphonenumber="phoneLogin"
       >
-        <view class="login-page__phone-content">
-          <view class="login-page__phone-icon">
-            <wd-loading v-if="phoneLoading" type="circular" color="#ffffff" size="34rpx" />
-            <MobileIcon v-else name="mobile" size="44rpx" />
-          </view>
-          <text>{{ phoneLoading ? '正在登录…' : '手机一键登录' }}</text>
+        <view class="mobile-icon-box login-page__phone-icon" aria-hidden="true">
+          <wd-loading v-if="phoneLoading" type="circular" color="#ffffff" size="34rpx" />
+          <MobileIcon v-else name="mobile" size="44rpx" />
         </view>
-      </wd-button>
+        <text>{{ phoneLoading ? '正在登录…' : '手机一键登录' }}</text>
+      </button>
+      <text v-if="phoneError" class="login-page__phone-error" role="alert">{{ phoneError }}</text>
     </view>
     <!-- #endif -->
     <view class="login-page__agreement">
@@ -436,7 +519,7 @@ function forgotPassword() {
   height: 42rpx;
 }
 
-.login-page__mark-dots text {
+.login-page__mark-dot {
   position: absolute;
   width: 12rpx;
   height: 12rpx;
@@ -444,17 +527,17 @@ function forgotPassword() {
   background: #f59e0b;
 }
 
-.login-page__mark-dots text:nth-child(1) {
+.login-page__mark-dot--left {
   left: 0;
   top: 14rpx;
 }
 
-.login-page__mark-dots text:nth-child(2) {
+.login-page__mark-dot--top {
   left: 16rpx;
   top: 0;
 }
 
-.login-page__mark-dots text:nth-child(3) {
+.login-page__mark-dot--bottom {
   right: 0;
   bottom: 0;
 }
@@ -518,7 +601,7 @@ function forgotPassword() {
   font-weight: 600;
 }
 
-.login-page__trust view {
+.login-page__trust-item {
   display: flex;
   align-items: center;
   gap: 10rpx;
@@ -578,16 +661,33 @@ function forgotPassword() {
 }
 
 .login-form__field {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
   height: 98rpx;
   min-height: 44px;
+  padding-left: 24rpx;
   border: 1rpx solid var(--login-line);
   border-radius: 18rpx;
   background: rgba(118, 118, 128, 0.08);
-  overflow: hidden;
   transition:
     border-color var(--login-apple-duration-fast) var(--login-apple-ease),
     box-shadow var(--login-apple-duration-fast) var(--login-apple-ease),
     background-color var(--login-apple-duration-fast) var(--login-apple-ease);
+}
+
+.login-form__input {
+  flex: 1;
+  align-self: stretch;
+  min-width: 0;
+  height: auto;
+  color: var(--login-text-strong);
+  font-size: max(28rpx, 14px);
+}
+
+.mobile-action.login-form__affordance {
+  border-radius: 8px;
+  color: var(--login-muted);
 }
 
 .login-form__control + .login-form__control {
@@ -687,19 +787,26 @@ function forgotPassword() {
 .login-page__phone-wrap {
   margin-top: 24rpx;
   flex-shrink: 0;
-  display: flex;
-  justify-content: center;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
 }
 
-.login-page__phone-content {
+.mobile-action.login-page__phone-button {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-width: max(220rpx, 110px);
+  min-height: max(130rpx, 65px);
+  padding: 6px 12px;
   gap: 10rpx;
-  color: var(--login-text-secondary);
+  border-radius: 12px;
+  color: var(--login-text-strong);
   font-size: max(24rpx, 12px);
+  font-weight: 600;
   line-height: 1.2;
+  text-align: center;
 }
 
 .login-page__phone-icon {
@@ -709,9 +816,14 @@ function forgotPassword() {
   color: #fff;
   background: var(--login-primary);
   box-shadow: var(--login-shadow-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+}
+
+.login-page__phone-error {
+  color: var(--login-red-strong);
+  font-size: .8125rem;
+  line-height: 1.45;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .login-page__agreement {

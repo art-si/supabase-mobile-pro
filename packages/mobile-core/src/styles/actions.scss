@@ -26,6 +26,19 @@
   .mobile-action--pressed { opacity: .78; }
   .mobile-action[disabled] { opacity: .55; }
 
+  .mobile-action--icon,
+  .mobile-icon-box {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-action--icon {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   .mobile-action--link {
     display: inline-flex;
     align-items: center;
@@ -43,5 +56,41 @@
   .mobile-action--link.mobile-action--pressed {
     color: var(--mobile-action-link-active-color, var(--mobile-action-link-color, var(--#{$prefix}-primary)));
     background: var(--mobile-action-link-active-background, transparent);
+  }
+
+  .mobile-inline-pair {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: var(--mobile-inline-pair-gap, 6px);
+    vertical-align: middle;
+    line-height: var(--mobile-inline-pair-leading, 1.25);
+  }
+
+  .mobile-inline-pair__label {
+    display: block;
+    min-width: 0;
+    line-height: inherit;
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-inline-pair--icon-end { flex-direction: row-reverse; }
+
+  // Keep the icon aligned to the first line when supporting text wraps.
+  .mobile-inline-pair--start {
+    --mobile-inline-pair-leading: 1.5;
+    align-items: flex-start;
+  }
+
+  .mobile-inline-pair__icon {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: calc(1em * var(--mobile-inline-pair-leading, 1.25));
+    /* #ifdef H5 */
+    // The used line height includes the browser's text size adjustment.
+    height: 1lh;
+    /* #endif */
   }
 }

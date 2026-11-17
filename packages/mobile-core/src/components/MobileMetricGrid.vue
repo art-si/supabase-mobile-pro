@@ -1,6 +1,6 @@
 <script setup lang="ts">
-interface MetricItem { label: string; value: string | number; unit?: string; tone?: 'danger' | 'warning' }
-defineProps<{ items: readonly MetricItem[]; selectable?: boolean }>()
+interface MetricItem { label: string; value: string | number; unit?: string; tone?: 'danger' | 'warning'; emphasis?: boolean }
+defineProps<{ items: readonly MetricItem[]; selectable?: boolean; summary?: boolean }>()
 const emit = defineEmits<{ select: [index: number] }>()
 
 function keyboardSelect(event: KeyboardEvent, index: number) {
@@ -9,7 +9,12 @@ function keyboardSelect(event: KeyboardEvent, index: number) {
 </script>
 
 <template>
-  <view class="metric-grid">
+  <view class="metric-grid" :class="{
+    'metric-grid--single': items.length === 1,
+    'metric-grid--pair': items.length === 2,
+    'metric-grid--summary': summary,
+    'metric-grid--emphasis': summary && !selectable && items.some(item => item.emphasis)
+  }">
     <template v-for="(item, index) in items" :key="index">
       <button v-if="selectable" class="metric-grid__item metric-grid__action"
         role="button" tabindex="0" :aria-label="item.label + ' ' + item.value + ' 单'"
@@ -18,7 +23,7 @@ function keyboardSelect(event: KeyboardEvent, index: number) {
         <text class="metric-grid__value">{{ item.value }}</text>
         <text class="metric-grid__label">{{ item.label }}</text>
       </button>
-      <view v-else class="metric-grid__item" :class="item.tone && 'metric-grid__item--' + item.tone">
+      <view v-else class="metric-grid__item" :class="[item.tone && 'metric-grid__item--' + item.tone, { 'metric-grid__item--emphasis': item.emphasis }]">
         <text class="metric-grid__label">{{ item.label }}</text>
         <view class="metric-grid__value">
           <text>{{ item.value }}</text>
@@ -39,6 +44,9 @@ function keyboardSelect(event: KeyboardEvent, index: number) {
   border-radius: var(--mobile-metric-grid-radius, 0px);
   overflow: hidden;
 }
+
+.metric-grid--single { grid-template-columns: minmax(0, 1fr); }
+.metric-grid--pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 .metric-grid__item {
   position: relative;
@@ -111,4 +119,57 @@ function keyboardSelect(event: KeyboardEvent, index: number) {
 .metric-grid__action:focus-visible { outline: 4rpx solid var(--tms-primary, var(--smis-primary)); outline-offset: -4rpx; }
 .metric-grid__item--danger .metric-grid__value { color: var(--tms-red-strong, var(--smis-red-strong)); }
 .metric-grid__item--warning .metric-grid__value { color: var(--tms-orange-strong, var(--smis-orange-strong)); }
+
+.metric-grid--summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  border: 0;
+  border-top: 1px solid var(--mobile-workspace-line);
+  border-radius: 0;
+  background: var(--mobile-workspace-line);
+}
+
+.metric-grid--summary .metric-grid__item {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-width: min(100%, 10rem);
+  max-width: 100%;
+  min-height: 0;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 12px var(--mobile-row-inset, 16px);
+  border-radius: 0;
+  background: var(--mobile-workspace-surface);
+}
+
+.metric-grid--summary .metric-grid__item + .metric-grid__item { border: 0; }
+.metric-grid--summary .metric-grid__item::before { display: none; }
+.metric-grid--summary .metric-grid__label { font-size: .8125rem; text-align: start; }
+
+.metric-grid--summary .metric-grid__value {
+  display: block;
+  overflow: visible;
+  font-size: clamp(1.0625rem, 5vw, 1.375rem);
+  line-height: 1.24;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.metric-grid--emphasis .metric-grid__value {
+  font-size: clamp(1rem, 4vw, 1.125rem);
+  font-weight: 600;
+}
+
+.metric-grid--emphasis .metric-grid__item--emphasis {
+  flex-basis: 100%;
+  padding-block: 14px;
+}
+
+.metric-grid--emphasis .metric-grid__item--emphasis .metric-grid__value {
+  font-size: clamp(1.375rem, 6vw, 1.875rem);
+  font-weight: 700;
+}
+
 </style>

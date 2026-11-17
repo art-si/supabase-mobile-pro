@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { activateActionKey, preventActionKey } from '../action-keyboard'
+
 defineOptions({ options: { virtualHost: true, styleIsolation: 'apply-shared' } })
 
 const props = withDefaults(defineProps<{
   disabled?: boolean
-  variant?: 'plain' | 'link'
+  variant?: 'plain' | 'link' | 'icon'
   ariaLabel?: string
   ariaPressed?: boolean
 }>(), { ariaPressed: undefined })
@@ -12,23 +14,12 @@ const emit = defineEmits<{ click: [] }>()
 function activate() {
   if (!props.disabled) emit('click')
 }
-
-function preventDefaultActivation(event: KeyboardEvent) {
-  if (event.key !== 'Enter' && event.key !== ' ') return false
-  event.preventDefault()
-  event.stopPropagation()
-  return true
-}
-
-function activateFromKeyboard(event: KeyboardEvent) {
-  if (preventDefaultActivation(event)) activate()
-}
 </script>
 
 <template>
   <button
     class="mobile-action"
-    :class="{ 'mobile-action--link': variant === 'link' }"
+    :class="{ 'mobile-action--link': variant === 'link', 'mobile-action--icon': variant === 'icon' }"
     role="button"
     :tabindex="disabled ? -1 : 0"
     :disabled="disabled"
@@ -37,8 +28,8 @@ function activateFromKeyboard(event: KeyboardEvent) {
     :aria-pressed="ariaPressed"
     hover-class="mobile-action--pressed"
     @click="activate"
-    @keydown="preventDefaultActivation"
-    @keyup="activateFromKeyboard($event)"
+    @keydown="preventActionKey"
+    @keyup="activateActionKey($event, activate)"
   >
     <slot />
   </button>

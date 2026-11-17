@@ -1,0 +1,47 @@
+@mixin apply($prefix) {
+  view,
+  text,
+  button,
+  input,
+  textarea {
+    box-sizing: border-box;
+  }
+
+  button::after {
+    border: 0;
+  }
+
+  button,
+  [role='button'] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  button,
+  input,
+  textarea {
+    font-family: inherit;
+  }
+
+  button:focus-visible,
+  [role='button']:focus-visible {
+    outline: 4rpx solid rgba(var(--#{$prefix}-primary-rgb), 0.32);
+    outline-offset: 4rpx;
+  }
+
+  input,
+  textarea {
+    caret-color: var(--#{$prefix}-primary);
+  }
+
+  /* #ifdef H5 */
+  uni-scroll-view .uni-scroll-view {
+    scrollbar-width: none;
+  }
+
+  uni-scroll-view .uni-scroll-view::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+  /* #endif */
+}

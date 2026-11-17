@@ -79,6 +79,22 @@ export function createMobileViteConfig(applicationRoot, uniPlugin) {
     build: { rolldownOptions: { checks: { pluginTimings: false } } },
     plugins: [
       uni(),
+      h5 && {
+        name: 'mobile-pro-h5-boot',
+        transformIndexHtml(html) {
+          const marker = '<!-- mobile-boot -->'
+          if (!html.includes(marker)) return
+
+          const title = html.match(/<title>([^<]+)<\/title>/i)?.[1]
+          if (!title?.trim()) throw new Error('H5 启动页需要在 index.html 中设置页面标题。')
+          const markup = readFileSync(join(sourceDirectory, 'h5-boot.html'), 'utf8').trim()
+          const styles = readFileSync(join(sourceDirectory, 'styles/h5-boot.css'), 'utf8')
+          return {
+            html: html.replace(marker, () => markup.replace('{{title}}', () => title)),
+            tags: [{ tag: 'style', children: styles, injectTo: 'head' }]
+          }
+        }
+      },
       {
         name: 'h5-nojekyll',
         apply: 'build',

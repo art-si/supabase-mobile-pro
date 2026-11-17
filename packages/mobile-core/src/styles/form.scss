@@ -22,3 +22,20 @@
 @mixin error-border {
   border-color: var(--tms-red-strong, var(--smis-red-strong, #b42318));
 }
+
+@mixin select-trigger {
+  @include control;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: start;
+
+  &:focus-visible { @include focus; }
+}
+
+@mixin select-chevron {
+  flex: none;
+  pointer-events: none;
+  transform: rotate(90deg);
+}

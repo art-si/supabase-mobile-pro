@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick } from 'vue'
+import { nativeFieldOf, useNativeFieldAttributes } from '../form-focus'
 import MobileAction from './MobileAction.vue'
 import MobileIcon from './MobileIcon.vue'
 
@@ -11,16 +12,28 @@ const props = withDefaults(defineProps<{
   label: string
   placeholder: string
   maxlength?: number
-}>(), { maxlength: 64 })
+  actionLabel?: string
+  disabled?: boolean
+  compactAction?: boolean
+}>(), { maxlength: 64, actionLabel: '搜索' })
 const emit = defineEmits<{ 'update:modelValue': [value: string]; submit: []; clear: [] }>()
+const field = useNativeFieldAttributes(() => ({
+  'aria-label': props.label,
+  'aria-disabled': props.disabled ? 'true' : undefined,
+  name: props.name
+}))
 const text = computed({
   get: () => props.modelValue,
   set: (value: string) => emit('update:modelValue', value)
 })
 
-function clear() {
+async function clear() {
   text.value = ''
   emit('clear')
+  // #ifdef H5
+  await nextTick()
+  nativeFieldOf(field.value)?.focus({ preventScroll: true })
+  // #endif
 }
 </script>
 
@@ -28,20 +41,29 @@ function clear() {
   <view class="mobile-search" role="search">
     <MobileIcon class="mobile-search__icon" name="search" size="31rpx" aria-hidden="true" />
     <input
+      ref="field"
       v-model="text"
       class="mobile-search__field"
+      :class="{ 'mobile-search__field--disabled': disabled }"
       :name="name"
       :aria-label="label"
       :placeholder="placeholder"
       :maxlength="maxlength"
+      :disabled="disabled"
       autocomplete="off"
       confirm-type="search"
       @confirm="emit('submit')"
     />
-    <MobileAction v-if="text" class="mobile-search__clear" aria-label="清除搜索" @click="clear">
+    <MobileAction v-if="text" variant="icon" class="mobile-search__clear" aria-label="清除搜索" :disabled="disabled" @click="clear">
       <MobileIcon name="close" size="30rpx" aria-hidden="true" />
     </MobileAction>
-    <MobileAction class="mobile-search__submit" @click="emit('submit')">搜索</MobileAction>
+    <MobileAction
+      v-if="actionLabel"
+      class="mobile-search__submit"
+      :class="{ 'mobile-search__submit--compact': compactAction }"
+      :disabled="disabled"
+      @click="emit('submit')"
+    ><text class="mobile-search__action-label">{{ actionLabel }}</text></MobileAction>
   </view>
 </template>
 
@@ -74,9 +96,9 @@ function clear() {
   color: var(--mobile-search-ink);
   font-size: 16px;
 }
+.mobile-search__field--disabled { opacity: .65; }
 
-.mobile-search .mobile-search__submit,
-.mobile-search .mobile-search__clear {
+.mobile-search .mobile-search__submit {
   display: grid;
   place-items: center;
   min-width: 44px;
@@ -88,6 +110,21 @@ function clear() {
   white-space: nowrap;
 }
 
-.mobile-search .mobile-search__clear { color: var(--mobile-search-muted); }
+.mobile-search .mobile-search__clear {
+  min-height: var(--mobile-search-height);
+  color: var(--mobile-search-muted);
+}
 .mobile-search .mobile-search__submit { padding-inline-end: 11px; }
+
+.mobile-search .mobile-search__submit--compact { padding-inline: 4px; }
+.mobile-search__submit--compact .mobile-search__action-label {
+  display: grid;
+  place-items: center;
+  min-width: 54px;
+  height: 32px;
+  padding-inline: 8px;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--mobile-search-accent);
+}
 </style>

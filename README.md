@@ -13,7 +13,9 @@ pnpm modules:install
 pnpm dev:h5:driver
 ```
 
-已有主仓检出可用 `pnpm modules:init` 初始化或同步到主仓记录的子仓版本。各应用使用自己的依赖目录、锁文件和环境配置。环境配置参见对应应用的 README。
+已有主仓检出可用 `pnpm modules:init` 初始化或同步到主仓记录的子仓版本。用 `pnpm modules:pull` 则会快进主仓当前分支，再逐个拉取子仓，切到 `master` 并快进至 `origin/master`。如果子仓的最新提交与主仓记录的版本不同，主仓会显示子仓指针变更，可用 `pnpm modules:status` 查看。
+
+各应用使用自己的依赖目录、锁文件和环境配置。环境配置参见对应应用的 README。
 
 | 应用参数 | Git 子仓 |
 | --- | --- |
@@ -21,9 +23,26 @@ pnpm dev:h5:driver
 | `shipper` | `modules/supabase-mobile-tms-shipper` |
 | `smis` | `modules/supabase-mobile-smis` |
 
-主仓的 `package.json` 提供 `dev:h5:driver`、`dev:h5:shipper` 和 `dev:h5:smis` 三个可直接运行的脚本。`pnpm dev:h5` 默认启动司机端，`pnpm dev:h5 <应用>` 可以指定其他端。如果 PowerShell 拦截 `pnpm.ps1`，请在主仓终端运行 `pnpm.cmd run dev:h5:driver`。
+在主仓运行 `npm run dev:h5:driver` 启动司机端、`npm run dev:h5:shipper` 启动货主端，或 `npm run dev:h5:smis` 启动 SMIS。这些命令也可以用 `pnpm run` 执行。
 
-用 `pnpm dev:mp-weixin <应用>` 启动指定端的小程序。`pnpm modules:check` 对三个应用做类型检查，`pnpm modules:build` 构建三端的 H5 和微信小程序。也可用 `pnpm build:h5 <应用>` 或 `pnpm build:mp-weixin <应用>` 单独构建。产物写入各子仓原有位置。
+用 `pnpm dev:mp-weixin <应用>` 启动指定端的小程序。`pnpm modules:check` 对三个应用做类型检查。
+
+## 构建与发布 GitHub Pages
+
+在主仓运行 `pnpm modules:build`，先构建完各子仓的 H5 静态站，再构建微信小程序：
+
+| 产物 | 各子仓的输出目录 | 只构建这一套 |
+| --- | --- | --- |
+| H5 静态站（GitHub Pages） | `docs/` | `pnpm build:h5` |
+| 微信小程序 | `dist/build/mp-weixin/` | `pnpm build:mp-weixin` |
+
+上述命令可以加 `driver`、`shipper` 或 `smis`，只构建对应子仓。H5 包包含 `index.html`、`.nojekyll` 和相对路径的静态资源，可直接部署到 GitHub Pages 的仓库子路径。货主端未接入真实服务时，可在构建前设置 `VITE_ENABLE_DEMO=true`，生成带演示入口的 H5 包。
+
+小程序打包后，在装有微信开发者工具的机器上用 `node scripts/check-weixin-wxss.mjs --compiler "<wcsc.exe 路径>" <小程序输出目录>` 检查原生 WXSS 编译，再打开模拟器走业务流程。该脚本可以一次检查多个输出目录。
+
+1. 在每个子仓把源码改动和更新后的 `docs/` 一起提交。用 `git add -A -- docs/` 纳入新增资源以及已经被新构建替换的旧文件。
+2. 先推送各子仓，再提交、推送主仓中的子仓指针。若 GitHub 远程名为 `github`，在各子仓用 `git push github master`。主仓的子仓地址指向 Gitee 时，也要先把对应提交推到 Gitee。
+3. 在各 GitHub 子仓的 **Settings → Pages** 选择 **Deploy from a branch → `master` → `/docs`**。之后推送该分支时会发布对应的静态包。[GitHub Pages 官方说明](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
 
 ## Android 调试包
 
@@ -51,8 +70,12 @@ pnpm build:android shipper
 
 顶部栏、底部导航、图标和字库、指标卡、状态标签也使用主仓组件。子仓传递各自的导航入口、指标数据和业务状态。应用初始化、启动时加载数据和图片选择的公共实现位于 `packages/mobile-core/src`。
 
+危险操作使用 `MobileConfirmDialog`，设置卡片底部的退出入口使用 `.mobile-row--danger`，空列表和搜索无结果使用 `MobileEmptyState`。各端提供文案和操作回调；取消确认、焦点恢复、状态版式和样式由主仓维护。
+
+自定义弹层使用 `useOverlayFocus` 管理焦点范围和关闭后的归还；多字段表单可用 `revealControl` 定位首个需修正的字段。读取失败使用 `MobileLoadError` 说明问题并提供重试入口。
+
 开发、构建和类型检查会先把公共源码同步到各子仓的 `src/_mobile-core/`，再通过 `@mobile-core/` 引用。微信小程序编译器需要在应用自己的输入目录内解析组件，因此生成目录由脚本管理并受 Git 忽略。运行中的开发服务重新启动后会同步新的公共代码。
 
 单独检出的业务仓可通过 `MOBILE_PRO_ROOT` 指向对应版本的主仓目录，也可以和名为 `supabase-mobile-pro` 的主仓检出放在同一级。字体的生成和授权说明见 [TMS Sans SC](packages/mobile-core/assets/fonts/README.md)。
 
-发布代码时先推送子仓提交，再在主仓更新并提交子仓指针。用 `pnpm modules:status` 查看主仓锁定的版本。
+用 `pnpm modules:status` 查看主仓锁定的版本。

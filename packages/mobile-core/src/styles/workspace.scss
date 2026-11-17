@@ -9,9 +9,10 @@
 
 // Shared inset workspace layout. The class prefix lets an app adopt it
 // without changing its route-specific selectors or its theme namespace.
-@mixin apply($class-prefix: 'mobile', $theme-prefix: 'tms') {
-  .#{$class-prefix}-page {
+@mixin apply($class-prefix: 'mobile', $theme-prefix: 'tms', $page-class: '#{$class-prefix}-page') {
+  .#{$page-class} {
     --mobile-workspace-inset: clamp(14px, 4vw, 24px);
+    --mobile-workspace-max-width: 560px;
     --mobile-workspace-card-radius: 20px;
     --mobile-workspace-card-padding: clamp(14px, 3.6vw, 20px);
     --mobile-skeleton-inline-padding: var(--mobile-workspace-inset);
@@ -50,27 +51,9 @@
     --mobile-header-accessory-focus: var(--mobile-workspace-focus);
     --mobile-header-pressed-background: var(--#{$theme-prefix}-primary-soft);
 
-    --mobile-nav-radius: 0px;
-    --mobile-nav-inset: 0px;
-    --mobile-nav-bottom: 0px;
-    --mobile-nav-padding: 4px max(8px, var(--mobile-safe-right)) calc(4px + var(--mobile-safe-bottom))
-      max(8px, var(--mobile-safe-left));
-    --mobile-nav-height: calc(64px + var(--mobile-safe-bottom));
-    --mobile-nav-box-sizing: border-box;
-    --mobile-nav-background: var(--mobile-workspace-surface);
-    --mobile-nav-border: var(--mobile-workspace-line);
-    --mobile-nav-border-width: 1px 0 0;
-    --mobile-nav-shadow: none;
-    --mobile-nav-backdrop: none;
-    --mobile-nav-icon-box: 29px;
-    --mobile-nav-action-size: 34px;
-    --mobile-nav-action-radius: 50%;
-    --mobile-nav-label-size: 12px;
-    --mobile-nav-label-color: var(--mobile-workspace-muted);
-    --mobile-nav-inactive-color: #5d687b;
-    --mobile-nav-active-decoration: none;
-    --mobile-nav-desktop-width: min(100vw, 560px);
-    --#{$theme-prefix}-tabbar-space: calc(88px + var(--mobile-safe-bottom));
+    // Reserve the second label line when enlarged system text wraps.
+    --mobile-nav-height: calc(max(64px, 2.5rem + 24px) + var(--mobile-safe-bottom));
+    --#{$theme-prefix}-tabbar-space: calc(var(--mobile-nav-height) + 24px);
 
     --mobile-metric-gap: 0px;
     --mobile-metric-grid-background: var(--mobile-workspace-surface);
@@ -84,7 +67,7 @@
     --mobile-metric-divider: 1px solid var(--mobile-workspace-line);
 
     width: 100%;
-    max-width: 560px;
+    max-width: var(--mobile-workspace-max-width);
     min-height: 100vh;
     min-height: 100dvh;
     margin-inline: auto;
@@ -117,7 +100,7 @@
     display: grid;
     gap: 6px;
     width: 100%;
-    max-width: 560px;
+    max-width: var(--mobile-workspace-max-width, 560px);
     margin-inline: auto;
     padding: 10px max(var(--mobile-workspace-inset), var(--mobile-safe-right))
       calc(10px + var(--mobile-safe-bottom)) max(var(--mobile-workspace-inset), var(--mobile-safe-left));
@@ -131,6 +114,42 @@
     font-size: max(24rpx, 13px);
     line-height: 1.45;
     overflow-wrap: anywhere;
+  }
+
+  .mobile-dock__note--error { color: var(--#{$theme-prefix}-red-strong); }
+
+  .mobile-dock--tabbed {
+    bottom: var(--mobile-nav-height);
+    padding-bottom: 10px;
+  }
+
+  .mobile-workspace--sticky-dock {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* #ifdef H5 */
+  // The Uni-app page wrapper must not become the sticky dock's scroll container.
+  uni-page-body:has(.mobile-workspace--sticky-dock) {
+    overflow: visible;
+  }
+  /* #endif */
+
+  .mobile-workspace--sticky-tabbed-dock {
+    padding-bottom: var(--mobile-nav-height);
+  }
+
+  // Keep the dock in the page flow so wrapped feedback reserves its own space.
+  .mobile-dock--sticky {
+    position: sticky;
+    flex: none;
+    margin-top: auto;
+  }
+
+  .mobile-dock__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .mobile-action.mobile-dock__action {
@@ -151,7 +170,7 @@
     overflow-wrap: anywhere;
   }
 
-  .#{$class-prefix}-page .section-title {
+  .#{$page-class} .section-title {
     color: var(--mobile-workspace-ink);
     font-size: max(28rpx, 16px);
     letter-spacing: -0.01em;
@@ -206,24 +225,6 @@
     overflow-wrap: anywhere;
   }
 
-  .#{$class-prefix}-empty {
-    display: grid;
-    justify-items: center;
-    gap: 9px;
-    padding: 32px var(--mobile-workspace-card-padding);
-    text-align: center;
-  }
-
-  .#{$class-prefix}-empty__icon {
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    color: var(--mobile-workspace-accent);
-    background: var(--#{$theme-prefix}-primary-soft);
-    border-radius: 14px;
-  }
-
   .demo-label {
     display: inline-flex;
     align-items: center;
@@ -237,14 +238,19 @@
   }
 
   /* #ifdef H5 */
+  // Keep keyboard focus above the bottom bar without shifting its own controls or dialogs.
+  .#{$page-class}:has(.bottom-nav) :focus-visible:where(:not(.bottom-nav *, [role='dialog'] *, [role='alertdialog'] *)) {
+    scroll-margin-block-end: calc(var(--mobile-nav-height) + 8px);
+  }
+
   @media (min-width: 561px) {
-    .#{$class-prefix}-page {
+    .#{$page-class} {
       box-shadow: 0 0 0 1px rgba(23, 32, 51, 0.07), 0 12px 60px rgba(20, 30, 49, 0.08);
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .#{$class-prefix}-page *, .#{$class-prefix}-page *::before, .#{$class-prefix}-page *::after {
+    .#{$page-class} *, .#{$page-class} *::before, .#{$page-class} *::after {
       animation-duration: .01ms !important;
       transition-duration: .01ms !important;
       scroll-behavior: auto !important;

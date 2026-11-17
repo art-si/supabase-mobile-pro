@@ -45,7 +45,7 @@
     --#{$prefix}-orange-strong: #d97706;
     --#{$prefix}-orange-soft: #fffbeb;
     --#{$prefix}-red: #e5484d;
-    --#{$prefix}-red-strong: #dc2626;
+    --#{$prefix}-red-strong: #c52228;
     --#{$prefix}-red-soft: #fef2f2;
     --#{$prefix}-info: #315ea8;
     --#{$prefix}-info-soft: #eef5ff;
@@ -155,7 +155,7 @@
   }
 
   .#{$prefix}-danger-action {
-    color: var(--#{$prefix}-red) !important;
+    color: var(--#{$prefix}-red-strong) !important;
     border: 2rpx solid rgba(229, 72, 77, 0.24) !important;
     background: #fff7f7 !important;
     box-shadow: none !important;
@@ -196,20 +196,6 @@
     align-items: center;
     justify-content: center;
     gap: 10rpx;
-    line-height: 1.2;
-  }
-
-  .#{$prefix}-inline-action {
-    height: 100%;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    line-height: 1.2;
-  }
-
-  .#{$prefix}-inline-action > text {
-    margin-left: 8rpx;
     line-height: 1.2;
   }
 
@@ -371,6 +357,12 @@
   }
 
   /* #ifdef H5 */
+  uni-text[user-select=""],
+  uni-text[user-select="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

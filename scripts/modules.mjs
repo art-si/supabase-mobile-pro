@@ -10,10 +10,11 @@ const applications = new Map([
 ])
 
 const [command, ...args] = process.argv.slice(2)
-const requestedApplication = args[0] && !args[0].startsWith('-') ? args.shift() : undefined
-const application = requestedApplication ?? (command === 'dev:h5' ? 'driver' : undefined)
+const application = args[0] && !args[0].startsWith('-') ? args.shift() : undefined
 const pnpm = process.env.npm_execpath
-if (!pnpm) throw new Error('请从主仓通过 pnpm 运行此命令。')
+if (!pnpm || !process.env.npm_config_user_agent?.startsWith('pnpm/')) {
+  throw new Error('请从主仓通过 pnpm 运行此命令。')
+}
 if ((command.startsWith('dev:') && !application) || (application && !applications.has(application))) {
   throw new Error('请指定 driver、shipper 或 smis 应用。')
 }
@@ -30,21 +31,17 @@ if (outputIndex >= 0 && command.startsWith('build')) {
   args.splice(outputIndex, option === '--outDir' ? 2 : 1)
 }
 
-const selected = application ? [applications.get(application)] : applications.values()
-for (const name of selected) {
-  const cwd = resolve(root, 'modules', name)
-  if (!existsSync(resolve(cwd, 'package.json'))) {
-    throw new Error(`${name} 尚未初始化，请运行 pnpm modules:init。`)
-  }
+const selected = application ? [applications.get(application)] : [...applications.values()]
+const scripts = command === 'build' ? ['build:h5', 'build:mp-weixin'] : [command]
 
-  const commands =
-    command === 'install'
-      ? [['install', '--frozen-lockfile', ...args]]
-      : command === 'build'
-        ? [['run', 'build:h5', ...args], ['run', 'build:mp-weixin', ...args]]
-        : [['run', command, ...args]]
-
-  for (const argv of commands) {
+// Finish all three Pages outputs before starting the mini program builds.
+for (const script of scripts) {
+  const argv = script === 'install' ? ['install', '--frozen-lockfile', ...args] : ['run', script, ...args]
+  for (const name of selected) {
+    const cwd = resolve(root, 'modules', name)
+    if (!existsSync(resolve(cwd, 'package.json'))) {
+      throw new Error(`${name} 尚未初始化，请运行 pnpm modules:init。`)
+    }
     console.log(`[${name}] pnpm ${argv.join(' ')}`)
     const { error, status } = spawnSync(process.execPath, [pnpm, ...argv], {
       cwd,

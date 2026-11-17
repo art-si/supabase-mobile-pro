@@ -11,7 +11,7 @@ export type ThemePresetId = (typeof THEME_PRESETS)[number]['id']
 export type MobileStatusTone = 'blue' | 'green' | 'orange' | 'red' | 'gray'
 
 // Uni's native confirmation dialogs take a color value, matching the red-strong token.
-export const MOBILE_DANGER_COLOR = '#dc2626'
+export const MOBILE_DANGER_COLOR = '#c52228'
 
 function savedPreset(storageKey: string, fallback: ThemePresetId): ThemePresetId {
   try {
@@ -32,7 +32,6 @@ export function createThemeStore(storageKey: string, defaultPresetId: ThemePrese
     },
     actions: {
       selectPreset(preset: ThemePresetId): boolean {
-        if (this.preset === preset) return true
         this.preset = preset
         try {
           uni.setStorageSync(storageKey, preset)

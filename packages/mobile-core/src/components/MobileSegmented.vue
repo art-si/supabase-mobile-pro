@@ -18,7 +18,7 @@ function select(value: Value) {
 </script>
 
 <template>
-  <view class="mobile-segmented" role="group" :aria-label="label">
+  <view class="mobile-segmented" :class="{ 'mobile-segmented--enabled': !disabled }" role="group" :aria-label="label">
     <MobileAction
       v-for="option in options"
       :key="option.value"
@@ -65,7 +65,7 @@ function select(value: Value) {
 }
 
 @media (hover: hover) {
-  .mobile-segmented__option:hover:not([aria-disabled=true]) {
+  .mobile-segmented--enabled .mobile-segmented__option:hover {
     color: var(--mobile-segmented-selection-ink, var(--mobile-workspace-accent, var(--tms-primary, var(--smis-primary))));
   }
 }

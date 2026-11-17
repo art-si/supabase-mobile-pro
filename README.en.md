@@ -11,9 +11,28 @@ pnpm modules:install
 pnpm dev:h5:driver
 ```
 
-Run `pnpm dev:h5:driver`, `pnpm dev:h5:shipper`, or `pnpm dev:h5:smis` from the main repository. `pnpm dev:h5` defaults to the driver app. Use `pnpm.cmd run dev:h5:driver` if Windows PowerShell blocks `pnpm.ps1`.
+Use `pnpm modules:init` to check out the submodule commits recorded by the main repository. Use `pnpm modules:pull` to fast-forward the current branch of the main repository, then switch each submodule to `master` and fast-forward it to `origin/master`. Run `pnpm modules:status` to see which submodule commits differ from the recorded versions.
 
-Use `driver`, `shipper`, or `smis` with `pnpm dev:h5`, `pnpm dev:mp-weixin`, `pnpm build:h5`, or `pnpm build:mp-weixin`. `pnpm modules:check` checks types and `pnpm modules:build` builds both platforms for all three apps. Each app keeps its own dependency installation, lockfile, environment configuration, and output locations.
+From the main repository, run `npm run dev:h5:driver` for the driver app, `npm run dev:h5:shipper` for the shipper app, or `npm run dev:h5:smis` for SMIS. These scripts also work with `pnpm run`.
+
+Use `driver`, `shipper`, or `smis` with `pnpm dev:mp-weixin` to start a mini program in development. `pnpm modules:check` checks all three apps.
+
+## Builds and GitHub Pages
+
+Run `pnpm modules:build` from the main repository to build all H5 sites first, then the mini programs:
+
+| Build | Output in each submodule | Build it separately |
+| --- | --- | --- |
+| Static H5 site (GitHub Pages) | `docs/` | `pnpm build:h5` |
+| WeChat Mini Program | `dist/build/mp-weixin/` | `pnpm build:mp-weixin` |
+
+Append `driver`, `shipper`, or `smis` to build a single app. Each H5 build includes `index.html`, `.nojekyll`, and relative asset URLs for hosting under a GitHub Pages repository path. If the Shipper backend is not connected, set `VITE_ENABLE_DEMO=true` before building to include the demo entry point.
+
+After building a mini program, run `node scripts/check-weixin-wxss.mjs --compiler "<path to wcsc.exe>" <mini-program output>` on a machine with WeChat DevTools before testing workflows in its simulator. You can pass several output directories in one run.
+
+1. Commit the rebuilt `docs/` alongside the source changes in each submodule. Use `git add -A -- docs/` to include both new assets and deletions of files replaced by the new build.
+2. Push the submodules before committing and pushing the new pointers from the main repository. If the GitHub remote is named `github`, run `git push github master` in each submodule. If the main repository references Gitee submodule URLs, push those commits there as well before updating the pointers.
+3. In **Settings → Pages** of each GitHub repository, select **Deploy from a branch → `master` → `/docs`**. Future pushes to that branch publish the updated static files. See the [GitHub Pages documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).
 
 ## Android debug builds
 
@@ -31,4 +50,6 @@ The Gradle Wrapper is used by default. If it cannot download Gradle, set `GRADLE
 
 Edit the shared source in `packages/mobile-core/src`. Development, builds, and type checks copy it into each app's ignored `src/_mobile-core/` directory for the mini program compiler. Restart a running development server to pick up changes to the shared source. A standalone app checkout can locate a sibling `supabase-mobile-pro` checkout or use `MOBILE_PRO_ROOT` to locate the matching platform version.
 
-Push submodule commits first, then commit the updated Git submodule pointers in the main repository.
+Use `MobileConfirmDialog` for destructive confirmations, `.mobile-row--danger` for the centered sign-out row, and `MobileEmptyState` for empty lists and search results. Apps supply the text and action callbacks; the shared components own presentation and keyboard behavior.
+
+Use `useOverlayFocus` for focus handling in custom overlays, `revealControl` to direct people to the first field that needs correction, and `MobileLoadError` to present load failures and retry actions consistently.

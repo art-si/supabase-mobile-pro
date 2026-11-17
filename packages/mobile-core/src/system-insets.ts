@@ -2,12 +2,34 @@ import { onMounted, onUnmounted, shallowRef, type InjectionKey, type ShallowRef 
 
 export const systemInsetsKey: InjectionKey<ShallowRef<Record<string, string>>> = Symbol('mobile-system-insets')
 
+function getWindowInfo() {
+  return typeof uni.getWindowInfo === 'function' ? uni.getWindowInfo() : uni.getSystemInfoSync()
+}
+
+function getSafeTop({ statusBarHeight, safeArea, safeAreaInsets }: ReturnType<typeof getWindowInfo>) {
+  return Math.max(statusBarHeight || 0, safeAreaInsets?.top ?? safeArea?.top ?? 0)
+}
+
+export function getCapsuleClearance(top = getSafeTop(getWindowInfo())) {
+  // #ifdef MP-WEIXIN
+  try {
+    const capsule = uni.getMenuButtonBoundingClientRect()
+    if (capsule.height > 0 && capsule.bottom > top) {
+      return capsule.bottom + Math.max(4, capsule.top - top)
+    }
+  } catch {
+    // Some WeChat versions return no menu rectangle during the first render.
+  }
+  // #endif
+  return top + 48
+}
+
 function nativeInsets(): Record<string, string> {
   const styles: Record<string, string> = {}
   // #ifdef MP-WEIXIN || APP-PLUS
-  const windowInfo = typeof uni.getWindowInfo === 'function' ? uni.getWindowInfo() : uni.getSystemInfoSync()
+  const windowInfo = getWindowInfo()
   const { screenHeight, screenWidth, safeArea, safeAreaInsets } = windowInfo
-  const top = Math.max(windowInfo.statusBarHeight || 0, safeAreaInsets?.top ?? safeArea?.top ?? 0)
+  const top = getSafeTop(windowInfo)
   const bottom = Math.max(0, safeAreaInsets?.bottom ?? (safeArea ? screenHeight - safeArea.bottom : 0))
   const left = Math.max(0, safeAreaInsets?.left ?? safeArea?.left ?? 0)
   const right = Math.max(0, safeAreaInsets?.right ?? (safeArea ? screenWidth - safeArea.right : 0))
@@ -17,16 +39,7 @@ function nativeInsets(): Record<string, string> {
   // #endif
 
   // #ifdef MP-WEIXIN
-  let capsuleBottom = top + 48
-  try {
-    const capsule = uni.getMenuButtonBoundingClientRect()
-    if (capsule.height > 0 && capsule.bottom > top) {
-      capsuleBottom = capsule.bottom + Math.max(4, capsule.top - top)
-    }
-  } catch {
-    // Some WeChat versions return no menu rectangle during the first render.
-  }
-  styles['--mobile-capsule-top'] = `${capsuleBottom}px`
+  styles['--mobile-capsule-top'] = `${getCapsuleClearance(top)}px`
   // #endif
   return styles
 }
