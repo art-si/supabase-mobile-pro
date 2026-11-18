@@ -30,6 +30,11 @@ function dismissDialog() {
 }
 
 function dismissPreview() {
+  const viewer = document.querySelector('dialog.mobile-image-viewer[open]')
+  if (viewer) {
+    viewer.dispatchEvent(new Event('cancel', { cancelable: true }))
+    return Promise.resolve(true)
+  }
   return new Promise<boolean>(resolve => uni.closePreviewImage({
     success: () => resolve(true),
     fail: () => resolve(false)

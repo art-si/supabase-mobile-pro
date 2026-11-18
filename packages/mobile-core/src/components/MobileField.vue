@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, useSlots } from 'vue'
+import { computed, provide, useSlots } from 'vue'
+import { mobileFieldContext } from '../field-context'
 import { nativeFieldOf, useNativeFieldAttributes } from '../form-focus'
 
 const props = withDefaults(defineProps<{
@@ -24,8 +25,17 @@ const props = withDefaults(defineProps<{
 const model = defineModel<string>({ default: '' })
 defineEmits<{ confirm: [] }>()
 const slots = useSlots()
+const labelParts = computed(() => {
+  const chars = [...props.label]
+  return { prefix: chars.slice(0, -1).join(''), last: chars[chars.length - 1] }
+})
 const nativeId = computed(() => `${props.field}-input`)
 const describedBy = computed(() => [props.hint && `${props.field}-hint`, props.error && `${props.field}-error`].filter(Boolean).join(' ') || undefined)
+const requirementId = computed(() => `${props.field}-required`)
+provide(mobileFieldContext, computed(() => ({
+  describedBy: [props.error && `${props.field}-error`, props.required && requirementId.value, props.hint && `${props.field}-hint`].filter(Boolean).join(' ') || undefined,
+  invalid: Boolean(props.error)
+})))
 const hasCount = computed(() => props.showCount && !props.readonly && props.maxlength >= 0)
 const controlState = computed(() => ({
   'mobile-field__control--error': Boolean(props.error),
@@ -64,9 +74,10 @@ const type = computed(() => {
 <template>
   <view class="mobile-field">
     <label class="mobile-field__label" :for="labelFor" @click="focusField">
-      {{ label }}
-      <text v-if="required" class="mobile-field__required" aria-hidden="true">*</text>
+      <template v-if="required">{{ labelParts.prefix }}<text class="mobile-field__label-tail">{{ labelParts.last }}<text class="mobile-field__required" aria-hidden="true">*</text></text></template>
+      <template v-else>{{ label }}</template>
     </label>
+    <text v-if="required && $slots.default" :id="requirementId" hidden>必填</text>
     <slot>
       <text v-if="readonly" class="mobile-field__control mobile-field__control--readonly" :id="field">
         {{ model || '—' }}
@@ -128,18 +139,19 @@ const type = computed(() => {
 .mobile-field { display: grid; gap: 7px; min-width: 0; }
 
 .mobile-field__label {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
+  display: block;
   color: var(--tms-text-strong, var(--smis-text-strong, #172033));
-  font-size: max(26rpx, 14px);
+  font-size: max(26rpx, 14px, .875rem);
   line-height: 1.4;
   font-weight: 650;
+  overflow-wrap: anywhere;
 }
+.mobile-field__label-tail { display: inline-block; white-space: nowrap; }
+.mobile-field__required { margin-inline-start: 4px; }
 
 .mobile-field__required,
 .mobile-field__error { color: var(--tms-red-strong, var(--smis-red-strong, #b42318)); }
-.mobile-field__error { font-size: max(24rpx, 13px); line-height: 1.45; }
+.mobile-field__error { font-size: max(24rpx, 13px, .8125rem); line-height: 1.45; overflow-wrap: anywhere; }
 .mobile-field__details {
   display: flex;
   flex-wrap: wrap;
@@ -147,7 +159,7 @@ const type = computed(() => {
   gap: 2px 12px;
   min-width: 0;
   color: var(--mobile-workspace-muted, var(--tms-muted, var(--smis-text-muted, #66738a)));
-  font-size: max(22rpx, 12px);
+  font-size: max(22rpx, 12px, .75rem);
   line-height: 1.45;
 }
 .mobile-field__hint { min-width: 0; overflow-wrap: anywhere; }
@@ -155,7 +167,7 @@ const type = computed(() => {
 
 .mobile-field__control {
   @include form.control;
-  height: var(--tms-control-height, var(--smis-control-height, 44px));
+  height: max(var(--tms-control-height, var(--smis-control-height, 44px)), calc(1.4em + 12px));
 }
 
 .mobile-field__control--textarea {
@@ -179,4 +191,12 @@ const type = computed(() => {
 .mobile-field__control:focus-within { @include form.focus; }
 .mobile-field__control--disabled { opacity: .6; }
 .mobile-field__placeholder { color: var(--tms-muted, var(--smis-muted, #66738a)); }
+
+/* #ifdef H5 */
+// Uni places the real DOM input inside its component wrapper. Tab scrolls the DOM input into view.
+.mobile-field__control :deep(.uni-input-input),
+.mobile-field__control :deep(.uni-textarea-textarea) {
+  scroll-margin-block-end: var(--mobile-field-scroll-clearance, 100px);
+}
+/* #endif */
 </style>

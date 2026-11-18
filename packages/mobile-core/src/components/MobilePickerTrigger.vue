@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { computed, getCurrentInstance, inject } from 'vue'
 import MobileIcon from './MobileIcon.vue'
 import { activateActionKey, preventActionKey } from '../action-keyboard'
+import { mobileFieldContext } from '../field-context'
 
 defineOptions({ options: { virtualHost: true, styleIsolation: 'apply-shared' } })
 
@@ -16,6 +18,15 @@ const props = defineProps<{
   describedBy?: string
 }>()
 const emit = defineEmits<{ click: [] }>()
+const context = inject(mobileFieldContext, undefined)
+const valueId = `mobile-picker-value-${getCurrentInstance()?.uid}`
+const valueDescription = computed(() => props.description || props.value)
+const describedBy = computed(() => {
+  const ids = [context?.value.describedBy, props.describedBy].filter(Boolean).join(' ').trim()
+  if (!ids) return undefined
+  return [...new Set([...ids.split(/\s+/), ...(valueDescription.value ? [valueId] : [])])].join(' ')
+})
+const isInvalid = computed(() => props.invalid || context?.value.invalid || undefined)
 
 function activate() {
   if (!props.disabled) emit('click')
@@ -27,7 +38,7 @@ function activate() {
     class="mobile-action mobile-picker-trigger"
     :class="{
       'mobile-picker-trigger--placeholder': !value && !compact,
-      'mobile-picker-trigger--invalid': invalid,
+      'mobile-picker-trigger--invalid': isInvalid,
       'mobile-picker-trigger--compact': compact
     }"
     :disabled="disabled"
@@ -35,10 +46,10 @@ function activate() {
     :tabindex="disabled ? -1 : 0"
     :aria-disabled="disabled || undefined"
     :aria-label="label"
-    :aria-description="description || value || undefined"
+    :aria-description="valueDescription"
     aria-haspopup="dialog"
     :aria-expanded="expanded"
-    :aria-invalid="invalid || undefined"
+    :aria-invalid="isInvalid"
     :aria-describedby="describedBy"
     hover-class="mobile-action--pressed"
     @click="activate"
@@ -46,6 +57,7 @@ function activate() {
     @keyup="activateActionKey($event, activate)"
   >
     <text class="mobile-picker-trigger__value">{{ value || placeholder }}</text>
+    <text v-if="describedBy && valueDescription" :id="valueId" hidden>{{ valueDescription }}</text>
     <view class="mobile-picker-trigger__chevron" aria-hidden="true">
       <MobileIcon name="chevron" size="12px" />
     </view>

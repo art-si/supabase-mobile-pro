@@ -5,6 +5,7 @@ import MobileBottomSheet from './MobileBottomSheet.vue'
 import MobileIcon from './MobileIcon.vue'
 import { activateActionKey, preventActionKey } from '../action-keyboard'
 import { elementOf, type ElementTarget } from '../form-focus'
+import { CALENDAR_WEEKDAYS, monthDayNumbers } from '../month-calendar'
 
 defineOptions({ options: { virtualHost: true, styleIsolation: 'apply-shared' } })
 
@@ -12,7 +13,6 @@ defineProps<{ title: string }>()
 const date = defineModel<number>({ required: true })
 const visible = defineModel<boolean>('visible', { required: true })
 
-const weekdays = ['日', '一', '二', '三', '四', '五', '六']
 const steps = [{ delta: -12, label: '上一年' }, { delta: -1, label: '上个月' },
   { delta: 1, label: '下个月' }, { delta: 12, label: '下一年' }] as const
 const grid = ref<ElementTarget>()
@@ -49,16 +49,11 @@ const cursorDate = computed(() => new Date(cursor.value))
 const year = computed(() => cursorDate.value.getFullYear())
 const month = computed(() => cursorDate.value.getMonth())
 const period = computed(() => `${year.value}年${month.value + 1}月`)
-const days = computed(() => {
-  const blanks = new Date(year.value, month.value, 1).getDay()
-  const count = new Date(year.value, month.value + 1, 0).getDate()
-  const cells = Array.from({ length: count }, (_, index) => {
-    const number = index + 1
-    const value = new Date(year.value, month.value, number).getTime()
-    return { key: value, value, label: formatDate(value), number }
-  })
-  return [...Array.from({ length: blanks }, (_, index) => ({ key: `blank-${index}` })), ...cells]
-})
+const days = computed(() => monthDayNumbers(year.value, month.value).map((number, index) => {
+  if (!number) return { key: `blank-${index}` }
+  const value = new Date(year.value, month.value, number).getTime()
+  return { key: value, value, label: formatDate(value), number }
+}))
 
 function canChangeMonth(delta: number) {
   const monthStart = new Date(year.value, month.value + delta, 1).getTime()
@@ -125,11 +120,11 @@ function onDayKey(event: KeyboardEvent) {
       </view>
 
       <view class="mobile-calendar__grid" aria-hidden="true">
-        <text v-for="weekday in weekdays" :key="weekday" class="mobile-calendar__weekday">{{ weekday }}</text>
+        <text v-for="weekday in CALENDAR_WEEKDAYS" :key="weekday" class="mobile-calendar__weekday">{{ weekday }}</text>
       </view>
       <view ref="grid" class="mobile-calendar__grid" role="group" :aria-label="period">
         <template v-for="cell in days" :key="cell.key">
-          <button v-if="'value' in cell" class="mobile-action mobile-calendar__day" role="button"
+          <button v-if="cell.value !== undefined" class="mobile-action mobile-calendar__day" role="button"
             :tabindex="cell.value === cursor ? 0 : -1" :data-date="cell.value" :aria-label="cell.label"
             :aria-pressed="cell.value === selected" :aria-current="cell.value === today ? 'date' : undefined"
             hover-class="mobile-calendar__day--pressed" @click="pick(cell.value)"
@@ -152,14 +147,14 @@ function onDayKey(event: KeyboardEvent) {
 </template>
 
 <style scoped lang="scss">
+@use '../styles/calendar';
 .mobile-calendar {
   --mobile-calendar-accent: var(--mobile-workspace-accent, var(--tms-primary, var(--smis-primary)));
   color: var(--mobile-workspace-ink, var(--tms-text-strong, var(--smis-text-strong)));
   padding: 8px max(6px, var(--mobile-safe-right, 0px)) 12px max(6px, var(--mobile-safe-left, 0px));
 }
 
-.mobile-calendar__navigation, .mobile-calendar__grid { display: grid; align-items: center; text-align: center; }
-.mobile-calendar__navigation { grid-template-columns: 44px 44px minmax(0, 1fr) 44px 44px; margin-bottom: 4px; }
+.mobile-calendar__navigation { display: grid; align-items: center; text-align: center; grid-template-columns: 44px 44px minmax(0, 1fr) 44px 44px; margin-bottom: 4px; }
 .mobile-calendar__step--next { grid-row: 1; grid-column: 4; }
 .mobile-calendar__step--next + .mobile-calendar__step--next { grid-column: 5; }
 .mobile-calendar__glyph { display: flex; justify-content: center; align-items: center; }
@@ -167,7 +162,7 @@ function onDayKey(event: KeyboardEvent) {
 .mobile-calendar__step.mobile-action { color: var(--mobile-calendar-accent); border-radius: 12px; }
 .mobile-calendar__period { grid-column: 3; grid-row: 1; min-width: 0; font-size: 1rem; font-weight: 700; line-height: 1.25; }
 
-.mobile-calendar__grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.mobile-calendar__grid { @include calendar.month-grid; align-items: center; }
 .mobile-calendar__weekday { padding-block: 5px; font-size: max(12px, .8125rem); color: var(--mobile-workspace-muted, #566174); }
 .mobile-calendar__day.mobile-action {
   display: grid;

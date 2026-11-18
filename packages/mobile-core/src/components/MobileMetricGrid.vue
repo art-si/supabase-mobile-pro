@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import MobileInlineLabel from './MobileInlineLabel.vue'
+import { activateActionKey, preventActionKey } from '../action-keyboard'
+
+defineOptions({ options: { styleIsolation: 'apply-shared' } })
+
 interface MetricItem { label: string; value: string | number; unit?: string; tone?: 'danger' | 'warning'; emphasis?: boolean }
 defineProps<{ items: readonly MetricItem[]; selectable?: boolean; summary?: boolean }>()
 const emit = defineEmits<{ select: [index: number] }>()
-
-function keyboardSelect(event: KeyboardEvent, index: number) {
-  if (!event.repeat) emit('select', index)
-}
 </script>
 
 <template>
@@ -16,12 +17,15 @@ function keyboardSelect(event: KeyboardEvent, index: number) {
     'metric-grid--emphasis': summary && !selectable && items.some(item => item.emphasis)
   }">
     <template v-for="(item, index) in items" :key="index">
-      <button v-if="selectable" class="metric-grid__item metric-grid__action"
-        role="button" tabindex="0" :aria-label="item.label + ' ' + item.value + ' 单'"
-        @click="emit('select', index)" @keydown.enter.prevent="keyboardSelect($event, index)"
-        @keydown.space.prevent="keyboardSelect($event, index)">
+      <button v-if="selectable" class="mobile-action metric-grid__item metric-grid__action"
+        role="button" tabindex="0" :aria-label="`${item.label} ${item.value}${item.unit ? ' ' + item.unit : ''}`"
+        hover-class="mobile-action--pressed"
+        @click="emit('select', index)" @keydown="preventActionKey"
+        @keyup="activateActionKey($event, () => emit('select', index))">
         <text class="metric-grid__value">{{ item.value }}</text>
-        <text class="metric-grid__label">{{ item.label }}</text>
+        <view class="metric-grid__label metric-grid__route">
+          <MobileInlineLabel icon="chevron" :label="item.label" :icon-size="11" icon-position="end" />
+        </view>
       </button>
       <view v-else class="metric-grid__item" :class="[item.tone && 'metric-grid__item--' + item.tone, { 'metric-grid__item--emphasis': item.emphasis }]">
         <text class="metric-grid__label">{{ item.label }}</text>
@@ -85,7 +89,7 @@ function keyboardSelect(event: KeyboardEvent, index: number) {
   min-width: 0;
   max-width: 100%;
   color: var(--tms-muted, var(--smis-muted));
-  font-size: max(24rpx, 12px);
+  font-size: max(24rpx, .75rem, 12px);
   font-weight: 600;
   line-height: 1.2;
   text-align: center;
@@ -96,27 +100,25 @@ function keyboardSelect(event: KeyboardEvent, index: number) {
   color: var(--tms-text-strong, var(--smis-text-strong));
   min-width: 0;
   max-width: 100%;
-  overflow: hidden;
-  font-size: 34rpx;
+  font-size: max(34rpx, 1.0625rem);
   font-weight: 700;
-  display: flex;
-  align-items: flex-end;
-  line-height: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: block;
+  line-height: 1.18;
+  text-align: center;
+  overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
 }
 
 .metric-grid__unit {
-  margin-left: 4rpx;
-  font-size: max(22rpx, 12px);
+  display: inline-block;
+  margin-inline-start: 4rpx;
+  font-size: max(22rpx, .75rem, 12px);
   font-weight: 600;
-  line-height: 1.1;
+  white-space: nowrap;
 }
-.metric-grid__action { width: 100%; margin: 0; touch-action: manipulation; }
-.metric-grid__action::after { border: 0; }
-.metric-grid__action:active { background: var(--tms-primary-soft, var(--smis-primary-soft)); }
-.metric-grid__action:focus-visible { outline: 4rpx solid var(--tms-primary, var(--smis-primary)); outline-offset: -4rpx; }
+.metric-grid__action { width: 100%; }
+.metric-grid__route { --mobile-inline-pair-gap: 4px; }
+.metric-grid__action:focus-visible { outline-offset: -2px; }
 .metric-grid__item--danger .metric-grid__value { color: var(--tms-red-strong, var(--smis-red-strong)); }
 .metric-grid__item--warning .metric-grid__value { color: var(--tms-orange-strong, var(--smis-orange-strong)); }
 
@@ -149,12 +151,9 @@ function keyboardSelect(event: KeyboardEvent, index: number) {
 .metric-grid--summary .metric-grid__label { font-size: .8125rem; text-align: start; }
 
 .metric-grid--summary .metric-grid__value {
-  display: block;
-  overflow: visible;
   font-size: clamp(1.0625rem, 5vw, 1.375rem);
   line-height: 1.24;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  text-align: start;
 }
 
 .metric-grid--emphasis .metric-grid__value {

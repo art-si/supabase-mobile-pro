@@ -9,9 +9,21 @@
   background: var(--tms-surface-soft, var(--smis-surface-soft, #f8f8fa));
   color: var(--tms-text, var(--smis-text, #152033));
   font: inherit;
-  font-size: max(28rpx, 16px);
+  font-size: max(28rpx, 16px, 1rem);
   line-height: 1.4;
   scroll-margin-block-end: 100px;
+}
+
+// Cap the column count but drop a column when usable width or enlarged text needs it.
+@mixin field-grid($columns: 2, $min-width: 136px, $gap: 12px) {
+  display: grid;
+  align-items: start;
+  gap: $gap;
+  grid-template-columns: repeat($columns, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(
+    min(100%, max($min-width, 8rem, calc((100% - #{($columns - 1) * $gap}) / #{$columns}))),
+    1fr
+  ));
 }
 
 @mixin focus {
@@ -29,6 +41,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  padding-block: 6px;
   text-align: start;
 
   &:focus-visible { @include focus; }

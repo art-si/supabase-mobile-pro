@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { activateActionKey, preventActionKey } from '../action-keyboard'
+import { elementOf, type ElementTarget } from '../form-focus'
 import MobileIcon from './MobileIcon.vue'
 import MobileInlineLabel from './MobileInlineLabel.vue'
+import MobileImagePreview from './MobileImagePreview.vue'
 
 defineOptions({ options: { styleIsolation: 'shared' } })
 
@@ -16,8 +18,10 @@ const props = withDefaults(defineProps<{
   readonly?: boolean
 }>(), { uploadLabel: '拍照上传', limit: 5 })
 
-const emit = defineEmits<{ preview: [index: number]; remove: [index: number]; upload: []; 'image-error': [index: number] }>()
+const emit = defineEmits<{ remove: [index: number]; upload: []; 'image-error': [index: number] }>()
 const unavailable = computed(() => props.disabled || props.uploading)
+const root = ref<ElementTarget>()
+const viewer = ref<InstanceType<typeof MobileImagePreview>>()
 
 interface Thumbnail {
   url: string
@@ -49,24 +53,43 @@ watch(() => [...props.images], (images) => {
   })
 }, { immediate: true })
 
-function openThumbnail(index: number) {
+function openThumbnail(index: number, event: Event) {
   const thumbnail = thumbnails.value[index]
   if (!thumbnail) return
   if (thumbnail.failed) thumbnails.value[index] = createThumbnail(thumbnail.url, index)
-  else emit('preview', index)
+  else preview(index, event)
 }
 
-function remove(index: number) {
-  if (!unavailable.value) emit('remove', index)
+function preview(index = 0, event?: Event) {
+  viewer.value?.open(props.images, props.label, index, event)
+}
+
+function remove(index: number, fromKeyboard = false) {
+  if (unavailable.value) return
+  // #ifdef H5
+  const active = fromKeyboard ? document.activeElement : null
+  const oldLength = props.images.length
+  // #endif
+  emit('remove', index)
+  // #ifdef H5
+  if (active?.matches('.mobile-evidence__remove')) void nextTick(() => {
+    const container = elementOf(root.value)
+    if (!container || props.images.length >= oldLength || (document.activeElement !== document.body && document.activeElement !== active)) return
+    const controls = container.querySelectorAll<HTMLElement>('.mobile-evidence__remove:not([aria-disabled="true"])')
+    const next = controls[Math.min(index, controls.length - 1)] ?? container.querySelector<HTMLElement>('.mobile-evidence__add:not([aria-disabled="true"])')
+    next?.focus()
+  })
+  // #endif
 }
 
 function upload() {
   if (!unavailable.value) emit('upload')
 }
+defineExpose({ preview })
 </script>
 
 <template>
-  <view class="mobile-evidence">
+  <view ref="root" class="mobile-evidence">
     <view v-if="thumbnails.length" class="mobile-evidence__grid">
       <view v-for="(thumbnail, index) in thumbnails" :key="thumbnail.key" class="mobile-evidence__item">
         <button
@@ -75,9 +98,9 @@ function upload() {
           tabindex="0"
           :aria-label="thumbnail.failed ? `缩略图加载失败，重新加载第 ${index + 1} 张${label}` : `预览第 ${index + 1} 张${label}`"
           hover-class="mobile-action--pressed"
-          @click="openThumbnail(index)"
+          @click="openThumbnail(index, $event)"
           @keydown="preventActionKey"
-          @keyup="activateActionKey($event, () => openThumbnail(index))"
+          @keyup="activateActionKey($event, () => openThumbnail(index, $event))"
         >
           <view v-if="thumbnail.failed" class="mobile-evidence__fallback" aria-hidden="true">
             <MobileIcon name="photo" size="16px" />
@@ -93,9 +116,9 @@ function upload() {
           tabindex="0"
           :aria-label="`预览第 ${index + 1} 张${label}原图`"
           hover-class="mobile-action--pressed"
-          @click="$emit('preview', index)"
+          @click="preview(index, $event)"
           @keydown="preventActionKey"
-          @keyup="activateActionKey($event, () => $emit('preview', index))"
+          @keyup="activateActionKey($event, () => preview(index, $event))"
         >预览原图</button>
         <slot name="status" :index="index" />
         <button
@@ -109,7 +132,7 @@ function upload() {
           hover-class="mobile-action--pressed"
           @click="remove(index)"
           @keydown="preventActionKey"
-          @keyup="activateActionKey($event, () => remove(index))"
+          @keyup="activateActionKey($event, () => remove(index, true))"
         >
           <MobileIcon name="close" size="16px" />
         </button>
@@ -130,6 +153,7 @@ function upload() {
     >
       <MobileInlineLabel icon="camera" icon-size="18px" :label="uploading ? '正在处理…' : uploadLabel" />
     </button>
+    <MobileImagePreview ref="viewer" />
   </view>
 </template>
 

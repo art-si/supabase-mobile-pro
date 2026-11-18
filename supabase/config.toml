@@ -1,4 +1,0 @@
-project_id = "supabase-mobile-pro"
-
-[functions.mobile-wechat-auth]
-verify_jwt = false

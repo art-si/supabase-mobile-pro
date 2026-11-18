@@ -1,54 +1,58 @@
 <script setup lang="ts">
 import type { MobileStatusTone } from '../theme'
 
+defineOptions({ options: { virtualHost: true, styleIsolation: 'apply-shared' } })
 defineProps<{ label: string; tone: MobileStatusTone; hideDot?: boolean }>()
 </script>
 
 <template>
   <view class="status-tag" :class="'status-tag--' + tone">
     <text v-if="!hideDot" class="status-tag__dot" aria-hidden="true" />
-    {{ label }}
+    <text class="status-tag__label">{{ label }}</text>
   </view>
 </template>
 
 <style scoped lang="scss">
 .status-tag {
-  min-width: 96rpx;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  min-width: min(100%, 48px);
+  max-width: 100%;
   min-height: max(46rpx, 24px);
-  padding: 0 16rpx;
-  border-radius: 999rpx;
+  padding: 4px 8px;
+  border-radius: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9rpx;
-  font-size: max(22rpx, 12px);
+  gap: 5px;
+  font-size: max(22rpx, 12px, .75rem);
   font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
+  line-height: 1.25;
 }
+.status-tag__label { min-width: 0; overflow-wrap: anywhere; }
 
 .status-tag__dot {
   box-sizing: border-box;
   flex: 0 0 auto;
-  width: 10rpx;
-  height: 10rpx;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: currentColor;
   opacity: 0.88;
 }
 
 .status-tag--blue {
-  color: var(--tms-primary, var(--smis-primary));
+  color: var(--tms-primary-strong, var(--smis-primary-strong));
   background: var(--tms-primary-soft, var(--smis-primary-soft));
 }
 
 .status-tag--green {
-  color: var(--tms-green-strong, var(--smis-green-strong));
+  color: #087451;
   background: var(--tms-green-soft, var(--smis-green-soft));
 }
 
 .status-tag--orange {
-  color: var(--tms-orange-strong, var(--smis-orange-strong));
+  color: #8a4b06;
   background: var(--tms-orange-soft, var(--smis-orange-soft));
 }
 
@@ -58,7 +62,7 @@ defineProps<{ label: string; tone: MobileStatusTone; hideDot?: boolean }>()
 }
 
 .status-tag--gray {
-  color: var(--tms-text-secondary, var(--smis-text-secondary));
+  color: var(--mobile-workspace-muted, #566174);
   background: var(--tms-surface-muted, var(--smis-surface-muted));
 }
 </style>

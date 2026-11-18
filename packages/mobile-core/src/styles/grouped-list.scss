@@ -1,4 +1,21 @@
 @mixin styles() {
+  .mobile-card-identity {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+    gap: 6px 8px;
+  }
+
+  .mobile-card-identity__main {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+  }
+
   .mobile-group {
     --mobile-row-inset: var(--mobile-workspace-card-padding, 16px);
     min-width: 0;

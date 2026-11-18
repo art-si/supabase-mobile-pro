@@ -1,28 +1,27 @@
-# 微信手机号一键登录
+# 移动端认证与账号管理
 
-货主和 SMIS 共用 `mobile-wechat-auth`。第一次用原有账号密码进入小程序，在「我的」选择「绑定微信手机号」；以后可从登录页用微信手机号授权登录。绑定需要最近 10 分钟内的密码登录。更换号码时，用同一账号重新用密码登录并重新绑定；同一应用中，一个手机号不能绑定多个账号。
+司机、货主和 SMIS 共用的 `mobile-wechat-auth` 由 `art-supabase-pro/supabase/functions` 维护和部署。本仓不保留第二份服务端实现或迁移脚本。项目 `ckbftoopuyophiebamwy` 使用经过事务校验的数据库直接变更；权限回归位于 Pro 的 `tests/integration/mobile-account-security.sql`。
 
-认证流程只使用微信服务端验证返回的号码。绑定只保存按应用计算的手机号摘要和已有 Auth 账号 ID，不读取业务联系号码，不注册业务账号，不调整权限。登录时，货主继续走客户资料或现有 TMS 员工权限，SMIS 继续走账号状态、租户状态和隐患上报资料访问规则。密码登录、演示和司机端现有接口使用原路径。H5 不展示微信小程序授权入口。
+## 账号开通
 
-## 开启条件
+- 司机：后台「系统管理 → 用户管理 → 移动端账号 → 关联司机用户」，选已有个人用户和具体司机档案。承运商归属来自司机档案；修改联系手机号不会切换司机身份。已有唯一有效对应关系已保留。新增开通前需将用户归类为员工或外部协作。
+- 货主：在同一入口为每位联系人「新建货主账号」，选客户企业，可选开单归属人。账号独立于内部员工用户；同一客户可有多位联系人。没有开单归属人的账号只能查单。已开通账号不能改绑到另一客户，换企业需新建个人账号。
+- 授权：需要 `System:User:ManageMobile`，新建另需 `System:User:Add`，重置密码另需 `System:User:ResetPassword`。普通管理员限定本租户。停用账号、司机/客户或租户后，现有会话也无法访问对应业务。
+- 重置密码会使原移动会话失效。解绑司机时先停用客户端，再清除司机档案；业务历史不删除。删除司机或客户会列出账号引用，需先处理关联。
 
-1. 在目标项目应用本目录的手机号绑定迁移，并部署 `mobile-wechat-auth`（登录前还没有 JWT，绑定动作自身验证会话和最近的密码登录）。
-2. 配置 Supabase Secrets：
+## 微信手机号
 
-   | Secret | 用途 |
-   | --- | --- |
-   | `WECHAT_SHIPPER_MP_APPID`、`WECHAT_SHIPPER_MP_SECRET` | 货主微信小程序 |
-   | `WECHAT_SMIS_MP_APPID`、`WECHAT_SMIS_MP_SECRET` | SMIS 微信小程序 |
-   | `WECHAT_PHONE_BINDING_KEY` | 至少 32 字符的随机独立密钥，只用于手机号摘要 |
+首次先用账号密码登录，10 分钟内到「我的 → 绑定微信手机号」完成本人授权。之后退出并用微信手机号登录。业务联系号码不自动成为微信登录凭据；手机号摘要按 `driver`、`shipper`、`smis` 分开保存。同一应用的号码不能转给另一个账号。授权码只能使用一次，失败后重新授权。
 
-   轮换手机号摘要密钥后，旧绑定需要重新建立。AppSecret、摘要密钥和 Supabase 服务角色密钥都留在服务端。
-3. 在各子仓的 `src/manifest.json` 配置对应的微信小程序 AppID，并在微信公众平台配置手机号授权能力和 Supabase 请求域名。构建时设置 `VITE_ENABLE_WECHAT_PHONE_LOGIN=true`。货主客户登录还需要对应环境的 `tms-shipper` 业务服务与账户绑定。
-4. 用各自的微信体验版执行：拒绝授权 → 未绑定回退账号密码 → 密码登录并绑定 → 退出 → 手机一键登录 → 确认打开的是原账号与业务权限。
+| Supabase Secret | 用途 |
+| --- | --- |
+| `WECHAT_MP_APPID`、`WECHAT_MP_SECRET` | 司机小程序 |
+| `WECHAT_SHIPPER_MP_APPID`、`WECHAT_SHIPPER_MP_SECRET` | 货主独立小程序，可选 |
+| `WECHAT_SMIS_MP_APPID`、`WECHAT_SMIS_MP_SECRET` | SMIS 小程序 |
+| `WECHAT_PHONE_BINDING_KEY` | 至少 32 字符的服务端随机摘要密钥 |
 
-司机的 AppID 可在开发者工具的临时本地副本复用来查看界面。一套 AppID 只能管理一套小程序发布版本。临时副本不上传，生产端点要求各应用独立使用微信凭据。
+按当前项目约定，货主未配置独立凭据时共用司机的完整凭据，前端验收构建也使用司机 AppID。将来切换独立小程序时同时配置货主的完整 AppID/Secret 和构建 AppID。仅配置其中一项会阻止该应用微信登录。所有 Secret 只留在 Supabase；不要轮换摘要密钥，除非计划让所有用户重新绑定。
 
-## 接口约定
+构建设置 `VITE_ENABLE_WECHAT_PHONE_LOGIN=true`，并配置微信公众平台手机号能力与请求域名。H5 使用账号密码。共用 AppID 的司机、货主逐个生成预览并验收：导入各自真实构建目录，先在模拟器确认品牌、账号标签和服务连接，再从该项目取预览码。不要仅凭 CLI 成功信息判断打包对象，开发工具可能恢复其他历史测试目录。司机验收完成后再切换货主。上传发布共用同一个小程序版本，发布时需明确选择应用。
 
-- 登录：`POST /functions/v1/mobile-wechat-auth`，`{ "app": "shipper" | "smis", "phoneCode": "微信授权码" }`，成功返回 Supabase session。
-- 绑定：同一 URL，加入 `"action": "bind"` 并发送当前账号的 Bearer access token，成功返回 `{ "bound": true }`。
-- 授权码是一次性的。接口失败后应发起新授权；前端不会自动重放。
+登录：`POST /functions/v1/mobile-wechat-auth`，`{ "app": "driver" | "shipper" | "smis", "phoneCode": "微信授权码" }`，返回已通过业务身份检查的 Supabase session。绑定在相同请求中加 `"action": "bind"` 和本人 Bearer access token，返回 `{ "bound": true }`。

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch, watchPostEffect } from 'vue'
+import { computed, getCurrentInstance, nextTick, onMounted, ref, watch, watchPostEffect } from 'vue'
 import { activateActionKey, preventActionKey } from '../action-keyboard'
 import { formatConversationText } from '../conversation-format'
 import { nativeFieldOf, revealControl, useNativeFieldAttributes } from '../form-focus'
+import { useVisibleViewport } from '../visible-viewport'
 import MobileIcon from './MobileIcon.vue'
 import MobileInlineLabel from './MobileInlineLabel.vue'
 import MobileTopBar from './MobileTopBar.vue'
@@ -21,13 +22,16 @@ const props = withDefaults(defineProps<{
   ready: boolean
   sending: boolean
   canReset: boolean
-  error?: string
   prompts: readonly { icon: string; label: string; question: string }[]
-  messages: readonly { role: 'user' | 'assistant'; content: string }[]
-}>(), { limit: 2000, placeholder: '输入你的问题…', error: '' })
+  messages: readonly {
+    role: 'user' | 'assistant'
+    content: string
+    failure?: { message: string; action?: 'retry' | 'reset' }
+  }[]
+}>(), { limit: 2000, placeholder: '输入你的问题…' })
 
 const draft = defineModel<string>({ default: '' })
-const emit = defineEmits<{ send: []; retry: []; reset: [] }>()
+const emit = defineEmits<{ send: []; retry: []; reset: []; recover: [] }>()
 const instance = getCurrentInstance()
 const nativeField = useNativeFieldAttributes(() => ({
   id: `${props.field}-input`,
@@ -37,8 +41,13 @@ const nativeField = useNativeFieldAttributes(() => ({
 const target = ref('')
 const following = ref(true)
 const composerFocused = ref(false)
-const viewportStyle = ref<{ height: string }>()
-const canSend = computed(() => props.ready && !props.sending && !!draft.value.trim())
+const visibleViewport = useVisibleViewport()
+const viewportStyle = computed(() => {
+  const bounds = visibleViewport.value
+  return bounds ? { top: `${bounds.top}px`, '--conversation-visible-height': `${bounds.height}px` } : undefined
+})
+const latestFailure = computed(() => props.messages[props.messages.length - 1]?.failure)
+const canSend = computed(() => props.ready && !props.sending && latestFailure.value?.action !== 'reset' && !!draft.value.trim())
 const turns = computed(() => props.messages.map(message => ({
   ...message,
   lines: message.role === 'assistant' ? formatConversationText(message.content) : []
@@ -54,25 +63,8 @@ function measureViewport() {
   }).exec()
 }
 
-// #ifdef H5
-function fitVisualViewport() {
-  const viewport = window.visualViewport
-  viewportStyle.value = viewport && viewport.scale === 1 && viewport.height < window.innerHeight - 1
-    ? { height: `${Math.round(viewport.height)}px` }
-    : undefined
-  void nextTick(measureViewport)
-}
-
-onMounted(() => {
-  window.visualViewport?.addEventListener('resize', fitVisualViewport)
-  fitVisualViewport()
-})
-onBeforeUnmount(() => window.visualViewport?.removeEventListener('resize', fitVisualViewport))
-// #endif
-
-// #ifndef H5
 onMounted(measureViewport)
-// #endif
+watch(visibleViewport, measureViewport, { flush: 'post' })
 
 function trackScroll(event: { detail: { scrollTop: number; scrollHeight: number } }) {
   const { scrollTop, scrollHeight } = event.detail
@@ -104,13 +96,33 @@ function selectPrompt(question: string) {
   // #endif
 }
 
-function submit() {
-  if (!canSend.value) return
-  following.value = true
-  emit('send')
+function keepEditorInKeyboardPath() {
+  // #ifdef H5
+  nativeFieldOf(nativeField.value)?.focus({ preventScroll: true })
+  // #endif
 }
 
-function retry() {
+function submit(fromActionKey = false) {
+  if (!canSend.value) return
+  if (fromActionKey) keepEditorInKeyboardPath()
+  following.value = true
+  emit('send')
+  // #ifdef H5
+  void nextTick(() => {
+    const field = nativeFieldOf(nativeField.value)
+    // Uni debounces external textarea updates. Don't let the next keystroke append to a sent question.
+    if (field && draft.value === '') field.value = ''
+  })
+  // #endif
+}
+
+function recover(fromActionKey = false) {
+  if (!props.ready || props.sending || !latestFailure.value?.action) return
+  if (latestFailure.value.action === 'reset') {
+    emit('recover')
+    return
+  }
+  if (fromActionKey) keepEditorInKeyboardPath()
   following.value = true
   emit('retry')
 }
@@ -132,8 +144,8 @@ watchPostEffect(onCleanup => {
 // #endif
 
 watch(
-  () => [props.messages.length, props.sending, props.error] as const,
-  ([length, sending, error], [previousLength, wasSending]) => {
+  () => [props.messages.length, props.sending, latestFailure.value] as const,
+  ([length, sending, failure], [previousLength, wasSending]) => {
     if (!length) {
       following.value = true
       lastTop = 0
@@ -141,7 +153,7 @@ watch(
     } else if (following.value && length > previousLength && props.messages[length - 1]?.role === 'assistant') {
       // Start at the beginning of a new answer, so a long reply can be read in order.
       void scrollTo(`conversation-turn-${length - 1}`)
-    } else if (following.value && (length > previousLength || (sending && !wasSending) || error)) {
+    } else if (following.value && (length > previousLength || (sending && !wasSending) || failure)) {
       void scrollTo('conversation-end')
     }
   },
@@ -154,7 +166,7 @@ function copy(content: string) {
 </script>
 
 <template>
-  <view class="conversation" :style="viewportStyle">
+  <view class="conversation" :class="{ 'conversation--fitted': viewportStyle }" :style="viewportStyle">
     <MobileTopBar
       class="conversation__header" :title="title" capsule="none" show-back :back-fallback="backFallback"
       :show-menu="canReset" menu-icon="add" menu-label="新对话" @menu="emit('reset')"
@@ -190,6 +202,20 @@ function copy(content: string) {
             <template v-if="turn.role === 'user'">
               <text class="conversation__visually-hidden">我的问题</text>
               <text class="conversation__bubble" user-select>{{ turn.content }}</text>
+              <view v-if="turn.failure" class="conversation__failure">
+                <view class="mobile-inline-pair mobile-inline-pair--start conversation__failure-copy" :role="index === turns.length - 1 ? 'alert' : undefined">
+                  <view class="mobile-inline-pair__icon"><MobileIcon name="info" :size="16" /></view>
+                  <text class="mobile-inline-pair__label">{{ turn.failure.message }}</text>
+                </view>
+                <button
+                  v-if="index === turns.length - 1 && turn.failure.action"
+                  class="mobile-action mobile-action--link conversation__recover" role="button"
+                  :tabindex="ready && !sending ? 0 : -1" :disabled="!ready || sending"
+                  :aria-disabled="!ready || sending || undefined"
+                  hover-class="mobile-action--pressed" @click="recover()" @keydown="preventActionKey"
+                  @keyup="activateActionKey($event, () => recover(true))"
+                >{{ turn.failure.action === 'retry' ? '重试' : '开始新对话' }}</button>
+              </view>
             </template>
             <template v-else>
               <view class="conversation__byline">
@@ -218,14 +244,6 @@ function copy(content: string) {
           <wd-loading color="var(--mobile-workspace-accent)" size="16px" />
           <text>正在思考，请稍候…</text>
         </view>
-        <view v-if="error" class="conversation__feedback conversation__feedback--error" role="alert">
-          <text class="conversation__feedback-copy">{{ error }}</text>
-          <button class="mobile-action mobile-action--link" role="button" :tabindex="!ready || sending ? -1 : 0"
-            :disabled="!ready || sending" :aria-disabled="!ready || sending || undefined"
-            hover-class="mobile-action--pressed" @click="retry" @keydown="preventActionKey"
-            @keyup="activateActionKey($event, retry)"
-          >重试</button>
-        </view>
         <view id="conversation-end" class="conversation__end" aria-hidden="true" />
       </view>
     </scroll-view>
@@ -245,7 +263,7 @@ function copy(content: string) {
         <button class="mobile-action mobile-action--icon conversation__send" :class="{ 'conversation__send--disabled': !canSend }"
           role="button" :tabindex="canSend ? 0 : -1" :aria-label="sending ? '等待回复…' : '发送'"
           :disabled="!canSend" :aria-disabled="!canSend || undefined" hover-class="mobile-action--pressed"
-          @click="submit" @keydown="preventActionKey" @keyup="activateActionKey($event, submit)"
+          @click="submit()" @keydown="preventActionKey" @keyup="activateActionKey($event, () => submit(true))"
         >
           <view class="conversation__send-icon"><MobileIcon name="arrow-right" :size="22" /></view>
         </button>
@@ -271,6 +289,31 @@ function copy(content: string) {
   color: var(--mobile-workspace-ink, #172033);
   background: var(--mobile-workspace-surface, #fff);
 }
+
+/* #ifdef H5 */
+.conversation--fitted {
+  position: fixed;
+  inset-inline: 0;
+  width: 100%;
+  max-width: var(--mobile-workspace-max-width, 560px);
+  height: var(--conversation-visible-height);
+  margin-inline: auto;
+}
+.conversation--fitted .conversation__footer {
+  --conversation-safe-bottom: 0px;
+  display: flex;
+  flex-wrap: wrap;
+}
+.conversation--fitted .conversation__jump { align-self: center; margin: 0 8px 0 0; }
+.conversation--fitted .conversation__composer { flex: 1; min-width: 0; }
+.conversation--fitted .conversation__notice { flex: 0 0 100%; }
+.conversation--fitted .conversation__input {
+  max-height: clamp(44px, calc(var(--conversation-visible-height) * 0.2), 136px);
+}
+.conversation--fitted .conversation__input :deep(.uni-textarea-wrapper) {
+  max-height: clamp(44px, calc(var(--conversation-visible-height) * 0.16), 116px);
+}
+/* #endif */
 
 .conversation__header {
   --conversation-top: calc(8px + var(--mobile-safe-top, 0px));
@@ -354,7 +397,7 @@ function copy(content: string) {
 
 .conversation__thread { display: grid; gap: 24px; }
 .conversation__turn { min-width: 0; }
-.conversation__turn--user { display: flex; justify-content: flex-end; }
+.conversation__turn--user { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .conversation__bubble {
   max-width: 88%;
   padding: 11px 14px;
@@ -402,14 +445,27 @@ function copy(content: string) {
   font-size: max(13px, .8125rem);
 }
 .conversation__feedback { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 16px; color: var(--conversation-muted); font-size: max(14px, .875rem); }
-.conversation__feedback--error { padding: 6px 10px; border: 1px solid var(--conversation-line); border-radius: 12px; }
-.conversation__feedback-copy { flex: 1 1 160px; overflow-wrap: anywhere; }
+.conversation__failure {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 2px 8px;
+  max-width: 100%;
+}
+.conversation__failure-copy {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--conversation-muted);
+  font-size: max(13px, .8125rem);
+}
+.conversation__recover { min-width: 44px; min-height: 44px; text-align: center; }
 .conversation__end { height: 1px; }
 
 .conversation__footer {
   position: relative;
   flex: none;
-  padding: 6px var(--conversation-inset-end) calc(9px + var(--mobile-safe-bottom, 0px)) var(--conversation-inset-start);
+  padding: 6px var(--conversation-inset-end) calc(9px + var(--conversation-safe-bottom, var(--mobile-safe-bottom, 0px))) var(--conversation-inset-start);
   border-top: 1px solid var(--conversation-line);
   background: var(--mobile-workspace-surface, #fff);
 }

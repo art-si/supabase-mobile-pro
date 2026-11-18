@@ -11,21 +11,23 @@ const emit = defineEmits<{ 'update:modelValue': [preset: ThemePresetId] }>()
 </script>
 
 <template>
-  <view class="theme-picker mobile-row mobile-row--static" role="group" aria-label="主题色">
+  <view class="theme-picker" role="group" aria-label="主题色">
     <view class="theme-picker__label">
-      <MobileInlineLabel icon="settings" icon-size="20px" label="主题色" />
+      <MobileInlineLabel icon="settings" icon-size="18px" label="主题色" />
     </view>
-    <view class="theme-picker__options">
+    <view class="mobile-group theme-picker__options">
       <MobileAction
-        v-for="preset in THEME_PRESETS" :key="preset.id" class="theme-picker__choice"
+        v-for="preset in THEME_PRESETS" :key="preset.id" class="mobile-row theme-picker__choice"
         :aria-label="preset.name" :aria-pressed="preset.id === modelValue"
         @click="emit('update:modelValue', preset.id)"
       >
-        <view
-          class="theme-picker__swatch" :class="{ 'theme-picker__swatch--selected': preset.id === modelValue }"
-          :style="{ '--mobile-theme-color': preset.color }" aria-hidden="true"
-        >
-          <MobileIcon v-if="preset.id === modelValue" name="check" size="18px" />
+        <view class="theme-picker__swatch" :style="{ backgroundColor: preset.color }" aria-hidden="true" />
+        <view class="mobile-row__body">
+          <text class="mobile-row__label theme-picker__name">{{ preset.name }}</text>
+          <text class="mobile-row__detail theme-picker__description">{{ preset.description }}</text>
+        </view>
+        <view class="mobile-icon-box theme-picker__check" aria-hidden="true">
+          <MobileIcon v-if="preset.id === modelValue" name="check" size="20px" />
         </view>
       </MobileAction>
     </view>
@@ -33,48 +35,29 @@ const emit = defineEmits<{ 'update:modelValue': [preset: ThemePresetId] }>()
 </template>
 
 <style scoped lang="scss">
-.theme-picker {
-  min-height: 62px;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px;
-  padding-block: 8px;
-}
-
-.theme-picker__options {
+.theme-picker { display: grid; min-width: 0; gap: 8px; }
+.theme-picker__label {
+  --mobile-inline-pair-gap: 8px;
   display: flex;
-  align-items: center;
+  color: var(--mobile-workspace-muted, var(--tms-text-secondary, var(--smis-text-secondary)));
+  font-size: max(14px, .875rem);
+  font-weight: 650;
 }
-
-.theme-picker__label { --mobile-inline-pair-gap: 9px; font-size: 15px; font-weight: 650; }
-.theme-picker__options { gap: 6px; }
-
-.theme-picker__choice {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+.theme-picker .theme-picker__choice:focus-visible {
+  outline: 2px solid var(--tms-primary-strong, var(--smis-primary-strong));
+  outline-offset: -3px;
 }
-
 .theme-picker__swatch {
-  position: relative;
-  display: grid;
   width: 32px;
   height: 32px;
-  place-items: center;
-  border-radius: 50%;
-  color: #fff;
-  background: var(--mobile-theme-color);
+  flex: 0 0 32px;
+  border-radius: 10px;
 }
-
-.theme-picker__swatch--selected::after {
-  position: absolute;
-  inset: -5px;
-  border: 2px solid var(--mobile-theme-color);
-  border-radius: inherit;
-  content: '';
-  opacity: .55;
-  pointer-events: none;
+.theme-picker__name { font-size: max(15px, .9375rem); }
+.theme-picker__description { font-size: max(13px, .8125rem); }
+.theme-picker__check {
+  width: 24px;
+  height: 24px;
+  color: var(--tms-primary-strong, var(--smis-primary-strong));
 }
 </style>
