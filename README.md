@@ -80,4 +80,6 @@ pnpm build:android shipper
 
 Vue、Pinia、Wot UI、Uni-app 和构建检查工具的版本在主仓 `package.json` 中统一维护。业务仓的 `mobile-pro` 命令使用已锁定的源码包及其依赖。升级时先验证并发布主仓提交，再让所有业务仓锁定同一提交，刷新各自的 pnpm 锁文件。
 
+原生端共享的 Capacitor 平台、CLI 和插件版本也在主仓维护。各端通过 `includePlugins` 选择实际要同步到原生工程的插件。
+
 用 `pnpm modules:status` 查看主仓锁定的版本。

@@ -3,6 +3,7 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from
 import { createRequire } from 'node:module'
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
+import { baseNativePlugins } from './native-plugins.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const applications = {
@@ -118,8 +119,9 @@ function prepare(name, pnpm) {
   const platform = join(project, 'android')
   const webDir = 'web'
   const version = appVersion(application)
-  const { dependencies } = readJson(packagePath)
-  const nativeDependencies = Object.fromEntries(Object.entries(dependencies).filter(([dependency]) => dependency.startsWith('@capacitor/')))
+  const includePlugins = app.locationAndCamera
+    ? [...baseNativePlugins, '@capacitor/geolocation']
+    : baseNativePlugins
   let cli
   try {
     const require = createRequire(packagePath)
@@ -131,11 +133,12 @@ function prepare(name, pnpm) {
   }
 
   mkdirSync(project, { recursive: true })
-  writeJson(join(project, 'package.json'), { private: true, name: `${app.module}-android`, dependencies: nativeDependencies })
+  writeJson(join(project, 'package.json'), { private: true, name: `${app.module}-android` })
   writeJson(join(project, 'capacitor.config.json'), {
     appId: app.appId,
     appName: app.appName,
     webDir,
+    includePlugins,
     server: { androidScheme: 'https' },
     plugins: { SystemBars: { insetsHandling: 'css', initialViewportFitValueHint: 'cover' } }
   })

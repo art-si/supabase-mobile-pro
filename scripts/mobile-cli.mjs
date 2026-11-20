@@ -14,6 +14,7 @@ if (command === 'prepare' || command === 'typecheck') {
 }
 
 const tools = {
+  cap: ['@capacitor/cli', 'cap'],
   uni: ['@dcloudio/vite-plugin-uni', 'uni'],
   vite: ['vite', 'vite'],
   typecheck: ['vue-tsc', 'vue-tsc']
@@ -21,7 +22,7 @@ const tools = {
 
 if (command !== 'prepare') {
   if (!Object.hasOwn(tools, command)) {
-    throw new Error('用法：mobile-pro <prepare|uni|vite|typecheck> [参数]')
+    throw new Error('用法：mobile-pro <prepare|uni|vite|typecheck|cap> [参数]')
   }
   const [name, bin] = tools[command]
   const require = createRequire(resolve(installedMobileProRoot(applicationRoot), 'package.json'))

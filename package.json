@@ -1,6 +1,6 @@
 {
   "name": "supabase-mobile-pro",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "packageManager": "pnpm@11.9.0",
   "engines": {
@@ -13,7 +13,8 @@
     "packages/mobile-core",
     "scripts/consumer.mjs",
     "scripts/mobile-cli.mjs",
-    "scripts/mobile-runtime.mjs"
+    "scripts/mobile-runtime.mjs",
+    "scripts/native-plugins.mjs"
   ],
   "scripts": {
     "modules:init": "git submodule update --init --recursive",
@@ -35,6 +36,13 @@
     "icons:build": "node scripts/build-mobile-icons.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/browser": "8.0.5",
+    "@capacitor/cli": "8.6.2",
+    "@capacitor/core": "8.6.2",
+    "@capacitor/geolocation": "8.2.5",
+    "@capacitor/synapse": "1.0.4",
     "@dcloudio/types": "3.4.31",
     "@dcloudio/uni-app": "3.0.0-alpha-1000920260909822",
     "@dcloudio/uni-cli-shared": "3.0.0-alpha-1000920260909822",

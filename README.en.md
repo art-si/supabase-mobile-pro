@@ -52,6 +52,8 @@ Edit the shared source in `packages/mobile-core/src`. Development, builds, and t
 
 Pro owns the shared Vue, Pinia, Wot UI, Uni-app, build, and type-check tool versions. Each app's `mobile-pro` command uses the pinned archive and its installed dependencies. To upgrade, publish a tested Pro commit, then pin that same commit in each consumer and refresh their pnpm lockfiles.
 
+Pro also owns the shared Capacitor platform, CLI, and plugin versions. Each native app selects the plugins it syncs through Capacitor's `includePlugins` setting.
+
 Use `MobileConfirmDialog` for destructive confirmations, `.mobile-row--danger` for the centered sign-out row, and `MobileEmptyState` for empty lists and search results. Apps supply the text and action callbacks; the shared components own presentation and keyboard behavior.
 
 Use `useOverlayFocus` for focus handling in custom overlays, `revealControl` to direct people to the first field that needs correction, and `MobileLoadError` to present load failures and retry actions consistently.
