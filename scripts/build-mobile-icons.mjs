@@ -5,15 +5,14 @@ import { pathToFileURL } from 'node:url'
 
 const root = resolve(import.meta.dirname, '..')
 const core = resolve(root, 'packages/mobile-core')
-const driver = resolve(root, 'modules/supabase-mobile-tms-driver')
+const require = createRequire(import.meta.url)
 
-export async function buildMobileIcons(applicationRoot = driver) {
-  const fromApplication = createRequire(resolve(applicationRoot, 'package.json'))
-  const subsetFont = fromApplication('subset-font')
+export async function buildMobileIcons() {
+  const subsetFont = require('subset-font')
   const [manifestText, css, font] = await Promise.all([
     readFile(resolve(core, 'assets/fonts/icon-manifest.json'), 'utf8'),
-    readFile(fromApplication.resolve('bootstrap-icons/font/bootstrap-icons.css'), 'utf8'),
-    readFile(fromApplication.resolve('bootstrap-icons/font/fonts/bootstrap-icons.woff2'))
+    readFile(require.resolve('bootstrap-icons/font/bootstrap-icons.css'), 'utf8'),
+    readFile(require.resolve('bootstrap-icons/font/fonts/bootstrap-icons.woff2'))
   ])
   const iconCodes = new Map([...css.matchAll(/\.bi-([\w-]+)::before\s*\{\s*content:\s*"\\([0-9a-f]+)";/g)]
     .map(([, name, code]) => [name, Number.parseInt(code, 16)]))

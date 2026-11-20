@@ -1,5 +1,7 @@
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
+import { createRequire } from 'node:module'
+import { installedMobileProRoot } from './consumer.mjs'
 
 const sourceDirectory = resolve(import.meta.dirname, '../packages/mobile-core/src')
 const fontLicense = resolve(sourceDirectory, '../assets/fonts/NotoSansSC-OFL.txt')
@@ -61,13 +63,34 @@ export function prepareMobileCore(applicationRoot) {
   return directory
 }
 
+function createUniPlugins(applicationRoot, uniPlugin) {
+  if (uniPlugin) return (uniPlugin.default ?? uniPlugin)()
+  const platformRoot = installedMobileProRoot(applicationRoot)
+  const require = createRequire(resolve(platformRoot, 'package.json'))
+  const plugin = require('@dcloudio/vite-plugin-uni')
+  const previousContext = process.env.UNI_CLI_CONTEXT
+  // Register Uni's platform plugins from Pro. Subsequent build hooks use the application's context.
+  process.env.UNI_CLI_CONTEXT = platformRoot
+  try {
+    return (plugin.default ?? plugin)()
+  } finally {
+    if (previousContext === undefined) delete process.env.UNI_CLI_CONTEXT
+    else process.env.UNI_CLI_CONTEXT = previousContext
+  }
+}
+
 export function createMobileViteConfig(applicationRoot, uniPlugin) {
   const mobileCore = prepareMobileCore(applicationRoot)
-  const uni = uniPlugin.default ?? uniPlugin
   const h5 = process.env.UNI_PLATFORM === 'h5'
+  const alias = { '@mobile-core': mobileCore }
+  if (!uniPlugin) {
+    const require = createRequire(resolve(installedMobileProRoot(applicationRoot), 'package.json'))
+    // Uni preserves symlink paths. Resolve Pinia at its package root so its own dependencies remain reachable.
+    alias.pinia = dirname(require.resolve('pinia/package.json'))
+  }
   return {
     base: h5 ? './' : '/',
-    resolve: { alias: { '@mobile-core': mobileCore } },
+    resolve: { alias },
     css: {
       preprocessorOptions: {
         scss: {
@@ -78,7 +101,7 @@ export function createMobileViteConfig(applicationRoot, uniPlugin) {
     },
     build: { rolldownOptions: { checks: { pluginTimings: false } } },
     plugins: [
-      uni(),
+      createUniPlugins(applicationRoot, uniPlugin),
       h5 && {
         name: 'mobile-pro-h5-boot',
         transformIndexHtml(html) {

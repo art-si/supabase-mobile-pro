@@ -76,6 +76,8 @@ pnpm build:android shipper
 
 开发、构建和类型检查会先把公共源码同步到各子仓的 `src/_mobile-core/`，再通过 `@mobile-core/` 引用。微信小程序编译器需要在应用自己的输入目录内解析组件，因此生成目录由脚本管理并受 Git 忽略。运行中的开发服务重新启动后会同步新的公共代码。
 
-单独检出的业务仓可通过 `MOBILE_PRO_ROOT` 指向对应版本的主仓目录，也可以和名为 `supabase-mobile-pro` 的主仓检出放在同一级。字体的生成和授权说明见 [TMS Sans SC](packages/mobile-core/assets/fonts/README.md)。
+单独检出的业务仓通过 `pnpm install` 下载锁定提交的 Gitee 主仓源码包。在主仓的 `modules/` 中开发时直接使用主仓源码，也可用 `MOBILE_PRO_ROOT` 指定联调目录。字体生成需要可编辑的主仓检出，使用和授权说明见 [TMS Sans SC](packages/mobile-core/assets/fonts/README.md)。
+
+Vue、Pinia、Wot UI、Uni-app 和构建检查工具的版本在主仓 `package.json` 中统一维护。业务仓的 `mobile-pro` 命令使用已锁定的源码包及其依赖。升级时先验证并发布主仓提交，再让所有业务仓锁定同一提交，刷新各自的 pnpm 锁文件。
 
 用 `pnpm modules:status` 查看主仓锁定的版本。

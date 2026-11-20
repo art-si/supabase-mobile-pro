@@ -48,7 +48,9 @@ Run `pnpm build:android` to build both apps. Debug APKs are written to `artifact
 
 The Gradle Wrapper is used by default. If it cannot download Gradle, set `GRADLE_HOME` to a local installation of the same version (currently 8.14.3).
 
-Edit the shared source in `packages/mobile-core/src`. Development, builds, and type checks copy it into each app's ignored `src/_mobile-core/` directory for the mini program compiler. Restart a running development server to pick up changes to the shared source. A standalone app checkout can locate a sibling `supabase-mobile-pro` checkout or use `MOBILE_PRO_ROOT` to locate the matching platform version.
+Edit the shared source in `packages/mobile-core/src`. Development, builds, and type checks copy it into each app's ignored `src/_mobile-core/` directory for the mini program compiler. Restart a running development server to pick up changes to the shared source. For a standalone app checkout, `pnpm install` downloads the pinned Gitee archive. A checkout under the main repository's `modules/` directory uses the local shared sources. Set `MOBILE_PRO_ROOT` to use a local platform checkout for joint development.
+
+Pro owns the shared Vue, Pinia, Wot UI, Uni-app, build, and type-check tool versions. Each app's `mobile-pro` command uses the pinned archive and its installed dependencies. To upgrade, publish a tested Pro commit, then pin that same commit in each consumer and refresh their pnpm lockfiles.
 
 Use `MobileConfirmDialog` for destructive confirmations, `.mobile-row--danger` for the centered sign-out row, and `MobileEmptyState` for empty lists and search results. Apps supply the text and action callbacks; the shared components own presentation and keyboard behavior.
 

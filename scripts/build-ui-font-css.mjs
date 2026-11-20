@@ -13,6 +13,7 @@ const applications = [
   'supabase-mobile-smis'
 ]
 const excludedDirectories = new Set(['assets', 'static', '_mobile-core'])
+const require = createRequire(import.meta.url)
 
 async function collectSourceHan(directory, characters) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -28,8 +29,7 @@ async function collectSourceHan(directory, characters) {
 
 export async function buildUiFont(sourcePath) {
   if (sourcePath) {
-    const driverPackage = resolve(root, 'modules', applications[0], 'package.json')
-    const subsetFont = createRequire(driverPackage)('subset-font')
+    const subsetFont = require('subset-font')
     const characters = new Set(await readFile(resolve(fonts, 'common-han.txt'), 'utf8'))
     for (let code = 32; code <= 126; code++) characters.add(String.fromCharCode(code))
     for (const character of '，。！？：；（）【】《》、·—…％℃㎡³¥￥✓×→←↑↓‐－　“”‘’•①②③') characters.add(character)
