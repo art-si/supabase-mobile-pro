@@ -4,9 +4,12 @@
 @use './icons.scss';
 @use './actions.scss';
 
-@mixin apply($prefix) {
+// Opt out for size-constrained hosts; existing consumers keep the bundled font.
+@mixin apply($prefix, $embed-body-font: true) {
   @include presets.apply($prefix);
-  @include font.embed();
+  @if $embed-body-font {
+    @include font.embed();
+  }
   @include icons.embed();
   @include actions.apply($prefix);
 
@@ -17,7 +20,11 @@
     --mobile-safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
     --mobile-safe-left: max(env(safe-area-inset-left, 0px), var(--safe-area-inset-left, 0px));
     --mobile-safe-right: max(env(safe-area-inset-right, 0px), var(--safe-area-inset-right, 0px));
-    --#{$prefix}-font-family: 'TMS Sans SC', 'HarmonyOS Sans SC', 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+    @if $embed-body-font {
+      --#{$prefix}-font-family: 'TMS Sans SC', 'HarmonyOS Sans SC', 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+    } @else {
+      --#{$prefix}-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'HarmonyOS Sans SC', 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+    }
     --wot-typography-title-font-family: var(--#{$prefix}-font-family);
     --wot-typography-body-font-family: var(--#{$prefix}-font-family);
     --wot-typography-label-font-family: var(--#{$prefix}-font-family);

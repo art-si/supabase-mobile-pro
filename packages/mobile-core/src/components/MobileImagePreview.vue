@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, shallowRef } from 'vue'
+import { onHide } from '@dcloudio/uni-app'
 // #ifdef H5
 import MobileImageViewer from './MobileImageViewer.vue'
 // #endif
@@ -11,6 +12,7 @@ const label = ref('')
 const images = shallowRef<string[]>([])
 const trigger = shallowRef<HTMLElement | null>(null)
 const failed = ref(false)
+onHide(() => { index.value = -1 })
 
 function open(urls: readonly string[], title: string, start = 0, event?: Event) {
   if (!urls[start]) return

@@ -5,7 +5,9 @@ defineProps<{ label: string; block?: boolean }>()
 
 <template>
   <view class="mobile-inline-pair mobile-loading-status" :class="{ 'mobile-loading-status--block': block }" role="status">
-    <view class="mobile-loading-status__indicator" aria-hidden="true" />
+    <slot name="indicator">
+      <view class="mobile-loading-status__indicator" aria-hidden="true" />
+    </slot>
     <text class="mobile-loading-status__label">{{ label }}</text>
   </view>
 </template>

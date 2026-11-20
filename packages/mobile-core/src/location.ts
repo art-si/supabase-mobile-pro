@@ -17,6 +17,27 @@ export function toGcj02Location(coords: { longitude: number; latitude: number; a
   return { longitude, latitude, accuracyM: coords.accuracy }
 }
 
+/** Inject the host's installed Capacitor plugin; other apps need no new dependency. */
+export async function captureCapacitorGcj02(plugin: {
+  checkPermissions(): Promise<{ location: string; coarseLocation: string }>
+  requestPermissions(options: { permissions: ['location'] }): Promise<{ location: string; coarseLocation: string }>
+  getCurrentPosition(options: { enableHighAccuracy: boolean; timeout: number; maximumAge: number; enableLocationFallback: boolean }): Promise<{ coords: { longitude: number; latitude: number; accuracy: number } }>
+}): Promise<LocationCoordinates> {
+  let permission = await plugin.checkPermissions()
+  const granted = () => permission.location === 'granted' || permission.coarseLocation === 'granted'
+  if (!granted() && ['prompt', 'prompt-with-rationale'].includes(permission.location))
+    permission = await plugin.requestPermissions({ permissions: ['location'] })
+  if (!granted()) throw new Error('定位权限未开启，请在应用设置中允许访问位置后重试')
+  const { coords } = await plugin.getCurrentPosition({
+    enableHighAccuracy: permission.location === 'granted', timeout: 12000,
+    maximumAge: 0, enableLocationFallback: true
+  })
+  if (![coords.longitude, coords.latitude, coords.accuracy].every(Number.isFinite)
+    || Math.abs(coords.longitude) > 180 || Math.abs(coords.latitude) > 90 || coords.accuracy < 0)
+    throw new Error('暂时无法获取位置，请开启系统定位后重试')
+  return toGcj02Location(coords)
+}
+
 export function captureBrowserGcj02(): Promise<LocationCoordinates> {
   return new Promise((resolve, reject) => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {

@@ -187,7 +187,7 @@ function onDayKey(event: KeyboardEvent) {
   border: 1px solid transparent;
 }
 .mobile-calendar__number--today { border-color: var(--mobile-calendar-accent); font-weight: 700; }
-.mobile-calendar__number--selected { color: #fff; background: var(--mobile-calendar-accent); font-weight: 700; }
+.mobile-calendar__number--selected { color: var(--mobile-workspace-on-accent, #fff); background: var(--mobile-calendar-accent); font-weight: 700; }
 .mobile-calendar__day--pressed .mobile-calendar__number:not(.mobile-calendar__number--selected) {
   background: var(--tms-primary-soft, var(--smis-primary-soft));
 }
@@ -209,7 +209,7 @@ function onDayKey(event: KeyboardEvent) {
   background: var(--tms-primary-soft, var(--smis-primary-soft));
 }
 .mobile-calendar__action--confirm.mobile-action {
-  color: #fff;
+  color: var(--mobile-workspace-on-accent, #fff);
   background: var(--mobile-workspace-accent, var(--tms-primary, var(--smis-primary)));
 }
 </style>

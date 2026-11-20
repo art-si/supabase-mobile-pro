@@ -1,86 +1,139 @@
 <script setup lang="ts">
-import { computed, provide, useSlots } from 'vue'
-import { mobileFieldContext } from '../field-context'
-import { nativeFieldOf, useNativeFieldAttributes } from '../form-focus'
+import { computed, provide, useSlots, ref, watch } from "vue";
+import MobileAction from "./MobileAction.vue";
+defineOptions({ options: { styleIsolation: "apply-shared" } });
+import { mobileFieldContext } from "../field-context";
+import { nativeFieldOf, useNativeFieldAttributes } from "../form-focus";
 
-const props = withDefaults(defineProps<{
-  field: string
-  label: string
-  inputLabel?: string
-  placeholder?: string
-  maxlength?: number
-  error?: string
-  hint?: string
-  showCount?: boolean
-  required?: boolean
-  disabled?: boolean
-  focus?: boolean
-  password?: boolean
-  multiline?: boolean
-  readonly?: boolean
-  inputmode?: 'text' | 'numeric' | 'decimal' | 'tel' | 'email'
-  autocomplete?: string
-}>(), { maxlength: 120, inputmode: 'text', autocomplete: 'off' })
+const props = withDefaults(
+  defineProps<{
+    field: string;
+    label: string;
+    inputLabel?: string;
+    placeholder?: string;
+    maxlength?: number;
+    error?: string;
+    hint?: string;
+    showCount?: boolean;
+    required?: boolean;
+    disabled?: boolean;
+    focus?: boolean;
+    password?: boolean;
+    allowPasswordReveal?: boolean;
+    multiline?: boolean;
+    readonly?: boolean;
+    inputmode?: "text" | "numeric" | "decimal" | "tel" | "email";
+    autocomplete?: string;
+  }>(),
+  { maxlength: 120, inputmode: "text", autocomplete: "off" },
+);
 
-const model = defineModel<string>({ default: '' })
-defineEmits<{ confirm: [] }>()
-const slots = useSlots()
+const model = defineModel<string>({ default: "" });
+const passwordVisible = ref(false);
+watch(
+  () => [props.password, props.disabled, model.value === ""],
+  () => {
+    passwordVisible.value = false;
+  },
+);
+defineEmits<{ confirm: [] }>();
+const slots = useSlots();
 const labelParts = computed(() => {
-  const chars = [...props.label]
-  return { prefix: chars.slice(0, -1).join(''), last: chars[chars.length - 1] }
-})
-const nativeId = computed(() => `${props.field}-input`)
-const describedBy = computed(() => [props.hint && `${props.field}-hint`, props.error && `${props.field}-error`].filter(Boolean).join(' ') || undefined)
-const requirementId = computed(() => `${props.field}-required`)
-provide(mobileFieldContext, computed(() => ({
-  describedBy: [props.error && `${props.field}-error`, props.required && requirementId.value, props.hint && `${props.field}-hint`].filter(Boolean).join(' ') || undefined,
-  invalid: Boolean(props.error)
-})))
-const hasCount = computed(() => props.showCount && !props.readonly && props.maxlength >= 0)
+  const chars = [...props.label];
+  return { prefix: chars.slice(0, -1).join(""), last: chars[chars.length - 1] };
+});
+const nativeId = computed(() => `${props.field}-input`);
+const describedBy = computed(
+  () =>
+    [props.hint && `${props.field}-hint`, props.error && `${props.field}-error`]
+      .filter(Boolean)
+      .join(" ") || undefined,
+);
+const requirementId = computed(() => `${props.field}-required`);
+provide(
+  mobileFieldContext,
+  computed(() => ({
+    describedBy:
+      [
+        props.error && `${props.field}-error`,
+        props.required && requirementId.value,
+        props.hint && `${props.field}-hint`,
+      ]
+        .filter(Boolean)
+        .join(" ") || undefined,
+    invalid: Boolean(props.error),
+  })),
+);
+const hasCount = computed(
+  () => props.showCount && !props.readonly && props.maxlength >= 0,
+);
 const controlState = computed(() => ({
-  'mobile-field__control--error': Boolean(props.error),
-  'mobile-field__control--disabled': props.disabled
-}))
+  "mobile-field__control--error": Boolean(props.error),
+  "mobile-field__control--disabled": props.disabled,
+}));
 const labelFor = computed(() => {
   // #ifdef H5
-  if (!props.readonly && !slots.default) return nativeId.value
+  if (!props.readonly && !slots.default) return nativeId.value;
   // #endif
-  return props.field
-})
+  return props.field;
+});
 const control = useNativeFieldAttributes(() => ({
   id: nativeId.value,
   name: props.field,
-  'aria-label': props.inputLabel || props.label,
-  'aria-invalid': props.error ? 'true' : undefined,
-  'aria-required': props.required ? 'true' : undefined,
-  'aria-describedby': describedBy.value,
+  "aria-label": props.inputLabel || props.label,
+  "aria-invalid": props.error ? "true" : undefined,
+  "aria-required": props.required ? "true" : undefined,
+  "aria-describedby": describedBy.value,
   autocomplete: props.autocomplete,
-  inputmode: props.inputmode
-}))
+  inputmode: props.inputmode,
+}));
 
 function focusField() {
   // #ifdef H5
-  nativeFieldOf(control.value)?.focus()
+  nativeFieldOf(control.value)?.focus();
   // #endif
 }
 
 const type = computed(() => {
-  if (props.inputmode === 'numeric') return 'number'
-  if (props.inputmode === 'decimal') return 'digit'
-  return 'text'
-})
+  // Keep OTPs as text: numeric input is a keyboard hint, not a number value.
+  // This preserves leading zeroes, maxlength and system one-time-code AutoFill.
+  // #ifdef H5
+  if (
+    props.autocomplete === "one-time-code" ||
+    ["numeric", "decimal"].includes(props.inputmode)
+  )
+    return "text";
+  // #endif
+  if (props.inputmode === "numeric") return "number";
+  if (props.inputmode === "decimal") return "digit";
+  return "text";
+});
 </script>
 
 <template>
   <view class="mobile-field">
     <label class="mobile-field__label" :for="labelFor" @click="focusField">
-      <template v-if="required">{{ labelParts.prefix }}<text class="mobile-field__label-tail">{{ labelParts.last }}<text class="mobile-field__required" aria-hidden="true">*</text></text></template>
+      <template v-if="required"
+        >{{ labelParts.prefix
+        }}<text class="mobile-field__label-tail"
+          >{{ labelParts.last
+          }}<text class="mobile-field__required" aria-hidden="true"
+            >*</text
+          ></text
+        ></template
+      >
       <template v-else>{{ label }}</template>
     </label>
-    <text v-if="required && $slots.default" :id="requirementId" hidden>必填</text>
+    <text v-if="required && $slots.default" :id="requirementId" hidden
+      >必填</text
+    >
     <slot>
-      <text v-if="readonly" class="mobile-field__control mobile-field__control--readonly" :id="field">
-        {{ model || '—' }}
+      <text
+        v-if="readonly"
+        class="mobile-field__control mobile-field__control--readonly"
+        :id="field"
+      >
+        {{ model || "—" }}
       </text>
       <textarea
         v-else-if="multiline"
@@ -101,73 +154,182 @@ const type = computed(() => {
         :disabled="disabled"
         :focus="focus"
       />
-      <input
+      <view
         v-else
-        ref="control"
-        :id="field"
-        v-model="model"
-        class="mobile-field__control"
-        :class="[controlState, { 'mobile-field__control--numeric': type !== 'text' }]"
-        :name="field"
-        :aria-label="inputLabel || label"
-        :aria-invalid="Boolean(error)"
-        :aria-required="required"
-        :aria-describedby="describedBy"
-        :inputmode="inputmode"
-        :type="type"
-        :password="password"
-        :autocomplete="autocomplete"
-        :placeholder="placeholder"
-        placeholder-class="mobile-field__placeholder"
-        :maxlength="maxlength"
-        :disabled="disabled"
-        :focus="focus"
-        @confirm="$emit('confirm')"
-      />
+        class="mobile-field__input-wrap"
+        :class="{
+          'mobile-field__input-wrap--secret': password && allowPasswordReveal,
+          'mobile-field__input-wrap--suffix': Boolean(slots.suffix),
+        }"
+      >
+        <input
+          ref="control"
+          :id="field"
+          v-model="model"
+          class="mobile-field__control"
+          :class="[
+            controlState,
+            {
+              'mobile-field__control--numeric': ['numeric', 'decimal'].includes(
+                inputmode,
+              ),
+            },
+          ]"
+          :name="field"
+          :aria-label="inputLabel || label"
+          :aria-invalid="Boolean(error)"
+          :aria-required="required"
+          :aria-describedby="describedBy"
+          :inputmode="inputmode"
+          :type="type"
+          :password="password && !passwordVisible"
+          :autocomplete="autocomplete"
+          :placeholder="placeholder"
+          placeholder-class="mobile-field__placeholder"
+          :maxlength="maxlength"
+          :disabled="disabled"
+          :focus="focus"
+          @confirm="$emit('confirm')"
+        />
+        <view v-if="slots.suffix && !password" class="mobile-field__suffix"
+          ><slot name="suffix"
+        /></view>
+        <MobileAction
+          v-if="password && allowPasswordReveal"
+          class="mobile-field__reveal"
+          :disabled="disabled"
+          :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
+          :aria-pressed="passwordVisible"
+          @click="passwordVisible = !passwordVisible"
+        >
+          <wd-icon
+            :name="passwordVisible ? 'eye' : 'eye-invisible'"
+            size="22px"
+            aria-hidden="true"
+          />
+        </MobileAction>
+      </view>
     </slot>
-    <text v-if="error" :id="`${field}-error`" class="mobile-field__error" role="alert">{{ error }}</text>
+    <text
+      v-if="error"
+      :id="`${field}-error`"
+      class="mobile-field__error"
+      role="alert"
+      >{{ error }}</text
+    >
     <view v-if="hint || hasCount" class="mobile-field__details">
-      <text v-if="hint" :id="`${field}-hint`" class="mobile-field__hint">{{ hint }}</text>
-      <text v-if="hasCount" class="mobile-field__count">{{ model.length }}/{{ maxlength }}</text>
+      <text v-if="hint" :id="`${field}-hint`" class="mobile-field__hint">{{
+        hint
+      }}</text>
+      <text v-if="hasCount" class="mobile-field__count"
+        >{{ model.length }}/{{ maxlength }}</text
+      >
     </view>
   </view>
 </template>
 
 <style lang="scss">
-@use '../styles/form';
+@use "../styles/form";
 
-.mobile-field { display: grid; gap: 7px; min-width: 0; }
+.mobile-field {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+.mobile-field__input-wrap {
+  position: relative;
+  min-width: 0;
+}
+.mobile-field__input-wrap--secret .mobile-field__control,
+.mobile-field__input-wrap--suffix .mobile-field__control {
+  padding-inline-end: 56px;
+}
+.mobile-field__suffix {
+  position: absolute;
+  inset-inline-end: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  min-height: 44px;
+}
+.mobile-field__reveal {
+  position: absolute;
+  inset-inline-end: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  min-height: 48px;
+  padding: 0;
+  line-height: 1;
+  color: var(--mobile-workspace-muted, #66738a);
+  background: transparent;
+}
+.mobile-field__reveal:focus-visible {
+  outline: 2px solid var(--tms-primary, var(--lake, #0f6b5b));
+  outline-offset: -4px;
+  border-radius: 10px;
+}
 
 .mobile-field__label {
   display: block;
   color: var(--tms-text-strong, var(--smis-text-strong, #172033));
-  font-size: max(26rpx, 14px, .875rem);
+  font-size: max(26rpx, 14px, 0.875rem);
   line-height: 1.4;
   font-weight: 650;
   overflow-wrap: anywhere;
 }
-.mobile-field__label-tail { display: inline-block; white-space: nowrap; }
-.mobile-field__required { margin-inline-start: 4px; }
+.mobile-field__label-tail {
+  display: inline-block;
+  white-space: nowrap;
+}
+.mobile-field__required {
+  margin-inline-start: 4px;
+}
 
 .mobile-field__required,
-.mobile-field__error { color: var(--tms-red-strong, var(--smis-red-strong, #b42318)); }
-.mobile-field__error { font-size: max(24rpx, 13px, .8125rem); line-height: 1.45; overflow-wrap: anywhere; }
+.mobile-field__error {
+  color: var(--tms-red-strong, var(--smis-red-strong, #b42318));
+}
+.mobile-field__error {
+  font-size: max(24rpx, 13px, 0.8125rem);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
 .mobile-field__details {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 2px 12px;
   min-width: 0;
-  color: var(--mobile-workspace-muted, var(--tms-muted, var(--smis-text-muted, #66738a)));
-  font-size: max(22rpx, 12px, .75rem);
+  color: var(
+    --mobile-workspace-muted,
+    var(--tms-muted, var(--smis-text-muted, #66738a))
+  );
+  font-size: max(22rpx, 12px, 0.75rem);
   line-height: 1.45;
 }
-.mobile-field__hint { min-width: 0; overflow-wrap: anywhere; }
-.mobile-field__count { margin-inline-start: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mobile-field__hint {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mobile-field__count {
+  margin-inline-start: auto;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 
 .mobile-field__control {
   @include form.control;
-  height: max(var(--tms-control-height, var(--smis-control-height, 44px)), calc(1.4em + 12px));
+  height: max(
+    var(--tms-control-height, var(--smis-control-height, 44px)),
+    calc(1.4em + 12px)
+  );
 }
 
 .mobile-field__control--textarea {
@@ -186,11 +348,21 @@ const type = computed(() => {
   overflow-wrap: anywhere;
 }
 
-.mobile-field__control--numeric { font-variant-numeric: tabular-nums; }
-.mobile-field__control--error { @include form.error-border; }
-.mobile-field__control:focus-within { @include form.focus; }
-.mobile-field__control--disabled { opacity: .6; }
-.mobile-field__placeholder { color: var(--tms-muted, var(--smis-muted, #66738a)); }
+.mobile-field__control--numeric {
+  font-variant-numeric: tabular-nums;
+}
+.mobile-field__control--error {
+  @include form.error-border;
+}
+.mobile-field__control:focus-within {
+  @include form.focus;
+}
+.mobile-field__control--disabled {
+  opacity: 0.6;
+}
+.mobile-field__placeholder {
+  color: var(--tms-muted, var(--smis-muted, #66738a));
+}
 
 /* #ifdef H5 */
 // Uni places the real DOM input inside its component wrapper. Tab scrolls the DOM input into view.

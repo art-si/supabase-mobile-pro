@@ -14,7 +14,9 @@ withDefaults(defineProps<{
 <template>
   <view class="mobile-empty">
     <view class="mobile-empty__copy" :role="announce">
-      <view class="mobile-icon-box mobile-empty__icon" aria-hidden="true"><MobileIcon :name="icon" size="22px" /></view>
+      <slot name="illustration">
+        <view class="mobile-icon-box mobile-empty__icon" aria-hidden="true"><MobileIcon :name="icon" size="22px" /></view>
+      </slot>
       <text class="mobile-empty__title" role="heading" aria-level="2">{{ title }}</text>
       <text v-if="description" class="mobile-empty__description">{{ description }}</text>
     </view>

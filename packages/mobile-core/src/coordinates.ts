@@ -1,3 +1,11 @@
+/** Great-circle distance in metres. Both points must use the same coordinate system. */
+export function distanceMeters(from: readonly [number, number], to: readonly [number, number]): number | undefined {
+  if (![...from, ...to].every(Number.isFinite) || Math.abs(from[0]) > 180 || Math.abs(to[0]) > 180 || Math.abs(from[1]) > 90 || Math.abs(to[1]) > 90) return undefined
+  const rad = Math.PI / 180
+  const a = Math.sin((to[1] - from[1]) * rad / 2) ** 2 + Math.cos(from[1] * rad) * Math.cos(to[1] * rad) * Math.sin((to[0] - from[0]) * rad / 2) ** 2
+  return 6371008.8 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(Math.max(0, 1 - a)))
+}
+
 export function wgs84ToGcj02(longitude: number, latitude: number): [number, number] {
   if (longitude < 72.004 || longitude > 137.8347 || latitude < 0.8293 || latitude > 55.8271) {
     return [longitude, latitude]

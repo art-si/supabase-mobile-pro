@@ -46,7 +46,9 @@ function go(item: NavItem) {
       >
         <view class="bottom-nav__content">
           <view class="mobile-icon-box bottom-nav__icon-box" aria-hidden="true">
-            <MobileIcon :name="item.icon" :size="20" />
+            <slot name="icon" :item="item" :active="item.key === props.active">
+              <MobileIcon :name="item.icon" :size="20" />
+            </slot>
           </view>
           <text class="bottom-nav__label">{{ item.label }}</text>
         </view>

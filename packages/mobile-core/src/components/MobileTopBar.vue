@@ -71,7 +71,9 @@ function menu() {
     <view v-else class="top-bar__spacer" />
     <view class="top-bar__copy">
       <text v-if="eyebrow" class="top-bar__eyebrow">{{ eyebrow }}</text>
-      <text class="top-bar__title" role="heading" aria-level="1">{{ title }}</text>
+      <slot name="title">
+        <text class="top-bar__title" role="heading" aria-level="1">{{ title }}</text>
+      </slot>
       <text v-if="subtitle" class="top-bar__subtitle">{{ subtitle }}</text>
     </view>
     <button

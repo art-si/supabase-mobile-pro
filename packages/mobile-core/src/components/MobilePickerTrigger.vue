@@ -14,6 +14,7 @@ const props = defineProps<{
   disabled?: boolean
   invalid?: boolean
   compact?: boolean
+  iconOnly?: boolean
   description?: string
   describedBy?: string
 }>()
@@ -39,7 +40,8 @@ function activate() {
     :class="{
       'mobile-picker-trigger--placeholder': !value && !compact,
       'mobile-picker-trigger--invalid': isInvalid,
-      'mobile-picker-trigger--compact': compact
+      'mobile-picker-trigger--compact': compact,
+      'mobile-picker-trigger--icon-only': iconOnly
     }"
     :disabled="disabled"
     role="button"
@@ -56,7 +58,7 @@ function activate() {
     @keydown="preventActionKey"
     @keyup="activateActionKey($event, activate)"
   >
-    <text class="mobile-picker-trigger__value">{{ value || placeholder }}</text>
+    <text v-if="!iconOnly" class="mobile-picker-trigger__value">{{ value || placeholder }}</text>
     <text v-if="describedBy && valueDescription" :id="valueId" hidden>{{ valueDescription }}</text>
     <view class="mobile-picker-trigger__chevron" aria-hidden="true">
       <MobileIcon name="chevron" size="12px" />
@@ -88,4 +90,5 @@ function activate() {
   display: grid;
   place-items: center;
 }
+.mobile-picker-trigger--icon-only { display: grid; place-items: center; width: 48px; min-width: 48px; min-height: 48px; padding: 0; background: transparent; border-color: transparent; }
 </style>

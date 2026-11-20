@@ -58,6 +58,30 @@
     background: var(--mobile-action-link-active-background, transparent);
   }
 
+  // Related actions share a control box even when their visual emphasis differs.
+  // The rem-based minimum makes large text wrap the group instead of squeezing labels.
+  .mobile-action-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--mobile-action-group-min-width, 8.5rem)), 1fr));
+    align-items: stretch;
+    gap: var(--mobile-action-group-gap, 8px);
+    min-width: 0;
+  }
+  .mobile-action-group .mobile-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    width: 100%;
+    min-width: 0;
+    min-height: var(--#{$prefix}-control-height, 48px);
+    font-size: var(--#{$prefix}-control-font-size, 1rem);
+    line-height: 1.45;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
   .mobile-inline-pair {
     display: inline-flex;
     min-width: 0;

@@ -57,7 +57,9 @@ function rememberKeyboardRequest(event: KeyboardEvent) {
   <!-- #endif -->
     <MobileLoadError v-if="error && !loading" inline :message="error" :title="errorTitle" :retry-text="retryText" @retry="$emit('more')" />
     <view v-else-if="loading || canLoadMore || (finished && count)" class="mobile-list-footer">
-      <MobileLoadingStatus v-if="loading" label="正在加载更多…" />
+      <slot v-if="loading" name="loading">
+        <MobileLoadingStatus label="正在加载更多…" />
+      </slot>
       <view v-else-if="finished && count" class="mobile-inline-pair" role="status">
         <view class="mobile-list-footer__line" aria-hidden="true" />
         <text>{{ total !== undefined && count < total ? '已加载' : '已加载全部' }} {{ count }} 条</text>
