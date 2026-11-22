@@ -89,15 +89,19 @@ function retry() {
 }
 
 .mobile-load-error--inline .mobile-load-error__body {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: start;
-  gap: 8px;
+  column-gap: 8px;
 }
 
-.mobile-load-error--inline .mobile-load-error__copy { padding-block: 11px; }
+.mobile-load-error--inline .mobile-load-error__copy {
+  flex: 1 1 10em;
+  padding-block: 11px;
+}
 .mobile-load-error--inline .mobile-load-error__retry {
   --mobile-action-link-padding: 0 8px;
+  flex: none;
   justify-content: center;
   outline-offset: -2px;
 }

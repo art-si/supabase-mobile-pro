@@ -7,6 +7,7 @@ const sheetVisibilityKey: InjectionKey<Readonly<Ref<boolean>>> = Symbol('mobile-
 <script setup lang="ts">
 import { computed, inject, provide, ref, watch } from 'vue'
 import MobileIcon from './MobileIcon.vue'
+import MobileSheetFrame from './MobileSheetFrame.vue'
 import { activateActionKey, preventActionKey } from '../action-keyboard'
 import { useOverlayFocus } from '../overlay-focus'
 import { systemInsetsKey, useSystemInsets } from '../system-insets'
@@ -27,8 +28,8 @@ const props = withDefaults(defineProps<{
   zIndex?: number
   bodyHeight?: number
   keyboardHeight?: number
-}>(), { zIndex: 10 })
-const emit = defineEmits<{ 'after-enter': [] }>()
+}>(), { zIndex: 40 })
+const emit = defineEmits<{ 'after-enter': []; 'after-leave': [] }>()
 const panel = ref<HTMLElement | { $el?: unknown }>()
 const systemInsets = inject(systemInsetsKey, useSystemInsets, true)
 const parentSheet = inject(sheetVisibilityKey, undefined)
@@ -82,13 +83,12 @@ function close() {
 </script>
 
 <template>
-  <wd-popup
-    :model-value="visible"
-    position="bottom"
+  <MobileSheetFrame
+    :open="visible"
     :root-portal="rootPortal" :z-index="zIndex" :lock-scroll="lockScroll"
-    :close-on-click-modal="!busy"
-    :custom-style="popupStyle"
-    @update:model-value="close" @after-enter="emit('after-enter')"
+    :dismissible="!busy"
+    :panel-style="popupStyle"
+    @dismiss="close" @after-enter="emit('after-enter')" @after-leave="emit('after-leave')"
   >
     <view :id="dialogId" ref="panel" class="mobile-sheet" :class="{ 'mobile-sheet--tall': tall }"
       role="dialog" aria-modal="true" :aria-label="title" :aria-busy="busy || undefined" tabindex="-1"
@@ -107,7 +107,7 @@ function close() {
       <view v-if="$slots.footer" class="mobile-sheet__footer"><slot name="footer" /></view>
       <slot name="overlay" />
     </view>
-  </wd-popup>
+  </MobileSheetFrame>
 </template>
 
 <style scoped lang="scss">

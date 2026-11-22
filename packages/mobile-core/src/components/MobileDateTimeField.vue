@@ -11,6 +11,7 @@ const props = defineProps<{
   error?: string;
   disabled?: boolean;
   dateOnly?: boolean;
+  disableFuture?: boolean;
   required?: boolean;
 }>();
 const day = defineModel<string>("date", { required: true });
@@ -35,6 +36,7 @@ const calendar = computed({
         :label="dateLabel"
         :value="day"
         :expanded="visible"
+        :aria-controls="visible ? `${field}-date-dialog` : undefined"
         placeholder="选择日期"
         :disabled="disabled"
         @click="visible = true"
@@ -56,6 +58,8 @@ const calendar = computed({
     v-model="calendar"
     v-model:visible="visible"
     :title="dateLabel"
+    :trigger-id="field"
+    :disable-future="disableFuture"
   />
   <MobileTimePicker
     v-if="!dateOnly"

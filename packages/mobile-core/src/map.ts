@@ -14,6 +14,10 @@ export interface MobileMapInstance {
   getCenter(): MapLngLat
   getBounds(): { getSouthWest(): MapLngLat; getNorthEast(): MapLngLat }
 }
+export interface MobileMapPolygon {
+  on(name: string, callback: () => void): void
+  setOptions(options: Record<string, unknown>): void
+}
 export interface MobileMapSdk {
   Map: new (element: string, options: Record<string, unknown>) => MobileMapInstance
   Pixel: new (x: number, y: number) => unknown
@@ -21,7 +25,7 @@ export interface MobileMapSdk {
     setPosition(point: MapPoint): void
     on(name: string, callback: () => void): void
   }
-  Polygon: new (options: Record<string, unknown>) => { on(name: string, callback: () => void): void }
+  Polygon: new (options: Record<string, unknown>) => MobileMapPolygon
   Polyline: new (options: Record<string, unknown>) => unknown
 }
 export interface MapFence {

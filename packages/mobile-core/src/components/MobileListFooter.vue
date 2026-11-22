@@ -17,6 +17,8 @@ const props = defineProps<{
   error?: string
   errorTitle?: string
   retryText?: string
+  loadingLabel?: string
+  moreText?: string
 }>()
 defineEmits<{ more: [] }>()
 
@@ -58,14 +60,14 @@ function rememberKeyboardRequest(event: KeyboardEvent) {
     <MobileLoadError v-if="error && !loading" inline :message="error" :title="errorTitle" :retry-text="retryText" @retry="$emit('more')" />
     <view v-else-if="loading || canLoadMore || (finished && count)" class="mobile-list-footer">
       <slot v-if="loading" name="loading">
-        <MobileLoadingStatus label="正在加载更多…" />
+        <MobileLoadingStatus :label="loadingLabel || '正在加载更多…'" />
       </slot>
       <view v-else-if="finished && count" class="mobile-inline-pair" role="status">
         <view class="mobile-list-footer__line" aria-hidden="true" />
         <text>{{ total !== undefined && count < total ? '已加载' : '已加载全部' }} {{ count }} 条</text>
         <view class="mobile-list-footer__line" aria-hidden="true" />
       </view>
-      <MobileAction v-else variant="link" @click="$emit('more')">加载更多</MobileAction>
+      <MobileAction v-else variant="link" @click="$emit('more')">{{ moreText || '加载更多' }}</MobileAction>
     </view>
   <!-- #ifdef H5 -->
   </div>

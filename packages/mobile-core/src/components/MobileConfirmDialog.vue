@@ -132,7 +132,7 @@ function close(outcome: 'cancel' | 'confirm') {
 
 .mobile-confirm__actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5rem), 1fr));
   gap: 10px;
   margin-top: 2px;
 }

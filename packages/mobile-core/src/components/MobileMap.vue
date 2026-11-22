@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import type { MapFence, MapPoint, MobileMapInstance, MobileMapSdk } from '../map'
+import type { MapFence, MapPoint, MobileMapInstance, MobileMapPolygon, MobileMapSdk } from '../map'
 
 defineOptions({ options: { styleIsolation: 'apply-shared' } })
 const props = withDefaults(defineProps<{
@@ -25,6 +25,7 @@ const root = ref<HTMLElement | { $el: HTMLElement }>()
 const pending = ref(true)
 let map: MobileMapInstance | undefined, sdk: MobileMapSdk | undefined
 let overlays: unknown[] = [], preview: unknown[] = []
+const fenceLabels = new Map<string, { button: HTMLButtonElement; polygons: MobileMapPolygon[] }>()
 let mounted = false, version = 0
 let resize: ResizeObserver | undefined
 let loadTimer: ReturnType<typeof setTimeout> | undefined
@@ -36,6 +37,7 @@ function clear() {
   map?.destroy()
   map = undefined
   overlays = []
+  fenceLabels.clear()
   preview = []
 }
 async function reload() {
@@ -81,29 +83,46 @@ async function reload() {
     if (mounted && current === version) { pending.value = false; emit('loading', false); emit('error', cause) }
   }
 }
+function updateFenceSelection() {
+  for (const [id, { button, polygons }] of fenceLabels) {
+    const selected = props.selectedFence === id
+    const pressed = String(selected)
+    if (button.getAttribute('aria-pressed') === pressed) continue
+    button.setAttribute('aria-pressed', pressed)
+    for (const polygon of polygons) polygon.setOptions({
+      strokeWeight: selected ? 4 : 2,
+      fillOpacity: selected ? 0.23 : 0.13
+    })
+  }
+}
 function drawFences() {
   if (!map || !sdk) return
   map.remove(overlays)
   overlays = []
+  fenceLabels.clear()
   const node = root.value && ('$el' in root.value ? root.value.$el : root.value)
   const color = props.fenceColor || (node ? getComputedStyle(node).getPropertyValue('--mobile-map-fence-color').trim() : '')
   for (const fence of props.fences || []) {
+    const selected = props.selectedFence === fence.id
+    const polygons: MobileMapPolygon[] = []
     for (const path of fence.paths) {
       const polygon = new sdk.Polygon({
-        path, strokeColor: color || '#B42331', strokeWeight: props.selectedFence === fence.id ? 4 : 2,
+        path, strokeColor: color || '#B42331', strokeWeight: selected ? 4 : 2,
         strokeStyle: fence.dashed ? 'dashed' : 'solid', fillColor: color || '#B42331',
-        fillOpacity: props.selectedFence === fence.id ? 0.23 : 0.13, zIndex: 40, bubble: false
+        fillOpacity: selected ? 0.23 : 0.13, zIndex: 40, bubble: false
       })
       polygon.on('click', () => emit('fence', fence.id))
+      polygons.push(polygon)
       overlays.push(polygon)
     }
     const button = document.createElement('button')
     button.type = 'button'
     button.className = 'mobile-map__fence-label'
     button.setAttribute('aria-label', fence.label)
-    button.setAttribute('aria-pressed', String(props.selectedFence === fence.id))
+    button.setAttribute('aria-pressed', String(selected))
     button.textContent = '禁钓'
     button.addEventListener('click', (event) => { event.stopPropagation(); emit('fence', fence.id) })
+    fenceLabels.set(fence.id, { button, polygons })
     overlays.push(new sdk.Marker({
       position: fence.point, content: button, anchor: 'center', offset: new sdk.Pixel(0, 0),
       zIndex: 70, bubble: false
@@ -139,7 +158,8 @@ function drawDraft() {
 }
 onMounted(() => { mounted = true; void reload() })
 watch(() => props.reloadKey, () => { void reload() })
-watch(() => [props.fences, props.selectedFence, props.fenceColor], drawFences, { deep: true })
+watch(() => [props.fences, props.fenceColor], drawFences, { deep: true })
+watch(() => props.selectedFence, updateFenceSelection)
 watch(() => props.draft, drawDraft, { deep: true })
 onBeforeUnmount(() => { mounted = false; clear() })
 function fitFences() { if (map && overlays.length) map.setFitView(overlays, true, [32, 32, 32, 32], 17) }

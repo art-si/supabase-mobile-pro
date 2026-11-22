@@ -84,8 +84,8 @@ function onKeyUp(event: KeyboardEvent, value: Value) {
 
 <style scoped lang="scss">
 .mobile-segmented {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(48px, 3.55em)), 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   min-width: 0;
   padding: 4px;
@@ -97,6 +97,7 @@ function onKeyUp(event: KeyboardEvent, value: Value) {
 .mobile-segmented .mobile-segmented__option {
   display: grid;
   place-items: center;
+  flex: 1 1 max(48px, 3.55em);
   min-width: 0;
   min-height: 44px;
   padding: 4px;
@@ -106,6 +107,7 @@ function onKeyUp(event: KeyboardEvent, value: Value) {
   font-weight: 620;
   line-height: 1.22;
   overflow-wrap: anywhere;
+  text-wrap: balance;
   text-align: center;
 }
 

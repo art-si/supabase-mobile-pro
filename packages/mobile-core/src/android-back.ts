@@ -17,14 +17,18 @@ function dismissDialog() {
 
   let topOverlay: HTMLElement | undefined
   let highestZ = -Infinity
-  for (const overlay of document.querySelectorAll<HTMLElement>('.wd-popup-wrapper > .wd-overlay')) {
+  const overlays = document.querySelectorAll<HTMLElement>(
+    '.wd-popup-wrapper > .wd-overlay, .mobile-sheet-frame:not([inert]) > .mobile-sheet-frame__scrim'
+  )
+  for (const overlay of overlays) {
     if (!overlay.getClientRects().length) continue
-    const z = Number(getComputedStyle(overlay).zIndex) || 0
+    const layer = overlay.closest('.mobile-sheet-frame') ?? overlay
+    const z = Number(getComputedStyle(layer).zIndex) || 0
     if (z < highestZ) continue
     topOverlay = overlay
     highestZ = z
   }
-  // Wot's overlay respects each sheet's close-on-click-modal and submission guards.
+  // Send Back through the active backdrop so the dialog's dismissal guard still applies.
   topOverlay?.click()
   return Boolean(topOverlay)
 }

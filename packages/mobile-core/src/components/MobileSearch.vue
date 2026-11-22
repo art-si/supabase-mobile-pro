@@ -278,6 +278,7 @@ function reportKeyboard(event?: FocusEvent | { detail: { height?: number } }) {
           :name="name"
           :aria-label="label"
           :placeholder="placeholder"
+          placeholder-class="mobile-search__placeholder"
           :maxlength="maxlength"
           :disabled="disabled"
           autocomplete="off"
@@ -538,6 +539,10 @@ function reportKeyboard(event?: FocusEvent | { detail: { height?: number } }) {
 }
 .mobile-search__field--disabled {
   opacity: 0.65;
+}
+
+.mobile-search__placeholder {
+  color: var(--mobile-search-muted);
 }
 
 .mobile-search .mobile-search__submit {

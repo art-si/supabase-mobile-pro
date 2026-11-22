@@ -13,12 +13,13 @@ interface NavItem {
   prominent?: boolean
 }
 
-const props = defineProps<{ active: string; items: readonly NavItem[] }>()
-const emit = defineEmits<{ action: [key: string] }>()
+const props = defineProps<{ active: string; items: readonly NavItem[]; inPlace?: boolean }>()
+const emit = defineEmits<{ action: [key: string]; navigate: [key: string] }>()
 
 function go(item: NavItem) {
   if (item.key === props.active) return
   if (item.action) emit('action', item.key)
+  else if (props.inPlace) emit('navigate', item.key)
   else if (item.url) uni.reLaunch({ url: item.url })
 }
 </script>

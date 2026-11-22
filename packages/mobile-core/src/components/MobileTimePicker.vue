@@ -10,12 +10,18 @@ const visible = defineModel<boolean>('visible', { required: true })
 const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
 const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
 const selection = ref([8, 0])
+const wheelMounted = ref(false)
 watch(visible, (open) => {
-  if (open) selection.value = /^([01]\d|2[0-3]):[0-5]\d$/.test(value.value)
+  if (!open) return
+  selection.value = /^([01]\d|2[0-3]):[0-5]\d$/.test(value.value)
     ? value.value.split(':').map(Number) : [8, 0]
-}, { flush: 'sync' })
+  wheelMounted.value = true
+}, { immediate: true, flush: 'sync' })
+function afterLeave() {
+  if (!visible.value) wheelMounted.value = false
+}
 function change(event: { detail: { value: number[] } }) {
-  selection.value = event.detail.value
+  if (visible.value) selection.value = event.detail.value
 }
 function key(event: KeyboardEvent, column: number) {
   const max = column === 0 ? 23 : 59
@@ -34,10 +40,11 @@ function confirm() {
 
 <template>
   <MobileBottomSheet v-model="visible" :title="props.title" close-label="关闭时间选择"
-    root-portal :z-index="180" :trigger-id="triggerId" :dialog-id="`${triggerId}-dialog`">
+    root-portal :z-index="180" :trigger-id="triggerId" :dialog-id="`${triggerId}-dialog`"
+    @after-leave="afterLeave">
     <view class="mobile-time">
       <view class="mobile-time__labels" aria-hidden="true"><text>小时</text><text>分钟</text></view>
-      <picker-view v-if="visible" class="mobile-time__wheel" :value="selection" @change="change"
+      <picker-view v-if="wheelMounted" class="mobile-time__wheel" :value="selection" @change="change"
         indicator-style="height:48px;box-shadow:inset 0 1px var(--mobile-workspace-line),inset 0 -1px var(--mobile-workspace-line);"
         mask-style="background-image:none;">
         <picker-view-column role="spinbutton" aria-label="小时" :aria-valuenow="selection[0]" :aria-valuemin="0" :aria-valuemax="23"

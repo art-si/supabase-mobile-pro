@@ -1,10 +1,46 @@
-export function preventActionKey(event: KeyboardEvent) {
-  if (event.key !== 'Enter' && event.key !== ' ') return false
+function consumeActionKey(event: KeyboardEvent) {
+  if (event.isComposing || (event.key !== 'Enter' && event.key !== ' ')) return false
   event.preventDefault()
   event.stopPropagation()
   return true
 }
 
+// #ifdef H5
+const pressed = new WeakMap<EventTarget, string>()
+
+function actionControl(event: KeyboardEvent) {
+  if (event.currentTarget instanceof EventTarget) return event.currentTarget
+  // Uni's built-in controls expose a fresh metadata object for currentTarget.
+  return typeof document === 'undefined' ? null : document.activeElement
+}
+
+function clearOnBlur(event: Event) {
+  if (event.currentTarget) pressed.delete(event.currentTarget)
+}
+// #endif
+
+export function preventActionKey(event: KeyboardEvent) {
+  if (!consumeActionKey(event)) return false
+  // #ifdef H5
+  const target = actionControl(event)
+  if (target && !event.repeat) {
+    pressed.set(target, event.key)
+    target.addEventListener('blur', clearOnBlur, { once: true })
+  }
+  // #endif
+  return true
+}
+
 export function activateActionKey(event: KeyboardEvent, activate: () => void) {
-  if (preventActionKey(event)) activate()
+  if (!consumeActionKey(event)) return
+  // #ifdef H5
+  const target = actionControl(event)
+  if (!target) return
+  const started = pressed.get(target) === event.key
+  pressed.delete(target)
+  target.removeEventListener('blur', clearOnBlur)
+  // A native button can open a dialog on keydown and move focus before keyup.
+  if (!started) return
+  // #endif
+  activate()
 }

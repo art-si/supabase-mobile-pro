@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import MobileAction from './MobileAction.vue'
 import MobileBottomSheet from './MobileBottomSheet.vue'
 import MobileIcon from './MobileIcon.vue'
 import { activateActionKey, preventActionKey } from '../action-keyboard'
@@ -9,7 +8,7 @@ import { CALENDAR_WEEKDAYS, monthDayNumbers } from '../month-calendar'
 
 defineOptions({ options: { virtualHost: true, styleIsolation: 'apply-shared' } })
 
-defineProps<{ title: string }>()
+const props = defineProps<{ title: string; triggerId?: string; disableFuture?: boolean }>()
 const date = defineModel<number>({ required: true })
 const visible = defineModel<boolean>('visible', { required: true })
 
@@ -36,7 +35,7 @@ watch(visible, (open) => {
   const now = new Date()
   today.value = midnight(now)
   minDate.value = new Date(now.getFullYear() - 5, 0, 1).getTime()
-  maxDate.value = new Date(now.getFullYear() + 1, 11, 31).getTime()
+  maxDate.value = props.disableFuture ? today.value : new Date(now.getFullYear() + 1, 11, 31).getTime()
   const value = midnight(new Date(date.value))
   selected.value = cursor.value = Number.isFinite(value) ? clampDay(value) : today.value
 }, { immediate: true, flush: 'sync' })
@@ -52,7 +51,7 @@ const period = computed(() => `${year.value}年${month.value + 1}月`)
 const days = computed(() => monthDayNumbers(year.value, month.value).map((number, index) => {
   if (!number) return { key: `blank-${index}` }
   const value = new Date(year.value, month.value, number).getTime()
-  return { key: value, value, label: formatDate(value), number }
+  return { key: value, value, label: formatDate(value), number, disabled: value > maxDate.value }
 }))
 
 function canChangeMonth(delta: number) {
@@ -63,17 +62,21 @@ function canChangeMonth(delta: number) {
 function changeMonth(delta: number) {
   if (!canChangeMonth(delta)) return false
   const last = new Date(year.value, month.value + delta + 1, 0).getDate()
-  cursor.value = new Date(year.value, month.value + delta, Math.min(cursorDate.value.getDate(), last)).getTime()
+  cursor.value = clampDay(new Date(year.value, month.value + delta, Math.min(cursorDate.value.getDate(), last)).getTime())
   return true
 }
 
 function pick(value: number) {
-  selected.value = cursor.value = value
+  if (value <= maxDate.value) selected.value = cursor.value = value
+}
+
+function cancel() {
+  visible.value = false
 }
 
 function confirm() {
   date.value = selected.value
-  visible.value = false
+  cancel()
 }
 
 async function focusCursor() {
@@ -104,19 +107,28 @@ function onDayKey(event: KeyboardEvent) {
 </script>
 
 <template>
-  <MobileBottomSheet v-model="visible" :title="title" close-label="关闭日期选择" initial-focus=".mobile-calendar__day[tabindex='0']">
+  <MobileBottomSheet v-model="visible" :title="title" close-label="关闭日期选择"
+    root-portal :z-index="180" :trigger-id="triggerId"
+    :dialog-id="triggerId ? `${triggerId}-date-dialog` : undefined"
+    initial-focus=".mobile-calendar__day[tabindex='0']">
     <view class="mobile-calendar">
       <view class="mobile-calendar__navigation">
-        <MobileAction v-for="step in steps" :key="step.delta" class="mobile-calendar__step" variant="icon"
+        <button v-for="step in steps" :key="step.delta"
+          class="mobile-action mobile-action--icon mobile-calendar__step" role="button"
           :class="{ 'mobile-calendar__step--next': step.delta > 0 }" :aria-label="step.label"
-          :disabled="!canChangeMonth(step.delta)" @click="changeMonth(step.delta)"
+          :disabled="!canChangeMonth(step.delta)" :aria-disabled="!canChangeMonth(step.delta) || undefined"
+          :tabindex="canChangeMonth(step.delta) ? 0 : -1" hover-class="mobile-action--pressed"
+          @click="changeMonth(step.delta)" @keydown="preventActionKey"
+          @keyup="activateActionKey($event, () => changeMonth(step.delta))"
         >
           <view class="mobile-calendar__glyph" :class="{ 'mobile-calendar__glyph--previous': step.delta < 0 }">
             <MobileIcon name="chevron" :size="13" />
             <MobileIcon v-if="Math.abs(step.delta) === 12" name="chevron" :size="13" />
           </view>
-        </MobileAction>
-        <text class="mobile-calendar__period" role="status">{{ period }}</text>
+        </button>
+        <view class="mobile-calendar__period" role="status">
+          <text>{{ year }}年</text><text>{{ month + 1 }}月</text>
+        </view>
       </view>
 
       <view class="mobile-calendar__grid" aria-hidden="true">
@@ -126,6 +138,7 @@ function onDayKey(event: KeyboardEvent) {
         <template v-for="cell in days" :key="cell.key">
           <button v-if="cell.value !== undefined" class="mobile-action mobile-calendar__day" role="button"
             :tabindex="cell.value === cursor ? 0 : -1" :data-date="cell.value" :aria-label="cell.label"
+            :disabled="cell.disabled" :aria-disabled="cell.disabled || undefined"
             :aria-pressed="cell.value === selected" :aria-current="cell.value === today ? 'date' : undefined"
             hover-class="mobile-calendar__day--pressed" @click="pick(cell.value)"
             @keydown="onDayKey" @keyup="activateActionKey($event, () => pick(cell.value))"
@@ -139,8 +152,12 @@ function onDayKey(event: KeyboardEvent) {
     <template #footer>
       <view class="mobile-calendar__footer">
         <text class="mobile-calendar__selection" role="status">已选：{{ formatDate(selected) }}</text>
-        <MobileAction class="mobile-calendar__action mobile-calendar__action--cancel" @click="visible = false">取消</MobileAction>
-        <MobileAction class="mobile-calendar__action mobile-calendar__action--confirm" @click="confirm">确定</MobileAction>
+        <button class="mobile-action mobile-calendar__action mobile-calendar__action--cancel"
+          role="button" tabindex="0" hover-class="mobile-action--pressed"
+          @click="cancel" @keydown="preventActionKey" @keyup="activateActionKey($event, cancel)">取消</button>
+        <button class="mobile-action mobile-calendar__action mobile-calendar__action--confirm"
+          role="button" tabindex="0" hover-class="mobile-action--pressed"
+          @click="confirm" @keydown="preventActionKey" @keyup="activateActionKey($event, confirm)">确定</button>
       </view>
     </template>
   </MobileBottomSheet>
@@ -151,7 +168,10 @@ function onDayKey(event: KeyboardEvent) {
 .mobile-calendar {
   --mobile-calendar-accent: var(--mobile-workspace-accent, var(--tms-primary, var(--smis-primary)));
   color: var(--mobile-workspace-ink, var(--tms-text-strong, var(--smis-text-strong)));
-  padding: 8px max(6px, var(--mobile-safe-right, 0px)) 12px max(6px, var(--mobile-safe-left, 0px));
+  // Keep seven 44px touch targets at 320px and align to the header at regular widths.
+  --mobile-calendar-inset: clamp(4px, calc((100% - 308px) / 2), 16px);
+  padding: 8px max(var(--mobile-calendar-inset), var(--mobile-safe-right, 0px)) 8px
+    max(var(--mobile-calendar-inset), var(--mobile-safe-left, 0px));
 }
 
 .mobile-calendar__navigation { display: grid; align-items: center; text-align: center; grid-template-columns: 44px 44px minmax(0, 1fr) 44px 44px; margin-bottom: 4px; }
@@ -160,7 +180,18 @@ function onDayKey(event: KeyboardEvent) {
 .mobile-calendar__glyph { display: flex; justify-content: center; align-items: center; }
 .mobile-calendar__glyph--previous { transform: rotate(180deg); }
 .mobile-calendar__step.mobile-action { color: var(--mobile-calendar-accent); border-radius: 12px; }
-.mobile-calendar__period { grid-column: 3; grid-row: 1; min-width: 0; font-size: 1rem; font-weight: 700; line-height: 1.25; }
+.mobile-calendar__period {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.mobile-calendar__period text { white-space: nowrap; }
 
 .mobile-calendar__grid { @include calendar.month-grid; align-items: center; }
 .mobile-calendar__weekday { padding-block: 5px; font-size: max(12px, .8125rem); color: var(--mobile-workspace-muted, #566174); }
@@ -188,6 +219,11 @@ function onDayKey(event: KeyboardEvent) {
 }
 .mobile-calendar__number--today { border-color: var(--mobile-calendar-accent); font-weight: 700; }
 .mobile-calendar__number--selected { color: var(--mobile-workspace-on-accent, #fff); background: var(--mobile-calendar-accent); font-weight: 700; }
+.mobile-calendar__step.mobile-action[aria-disabled='true'],
+.mobile-calendar__day.mobile-action[aria-disabled='true'] {
+  color: var(--mobile-workspace-muted, #566174);
+  background: transparent;
+}
 .mobile-calendar__day--pressed .mobile-calendar__number:not(.mobile-calendar__number--selected) {
   background: var(--tms-primary-soft, var(--smis-primary-soft));
 }
