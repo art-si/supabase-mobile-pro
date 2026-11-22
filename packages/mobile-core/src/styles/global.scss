@@ -14,6 +14,7 @@
   @include actions.apply($prefix);
 
   /* #ifdef H5 */
+  html { scrollbar-gutter: stable; }
   // Sheets and dialogs keep their own scrolling, including inside root portals.
   .mobile-sheet__body .uni-scroll-view, .wd-popup, .mobile-confirm {
     scrollbar-width: none;

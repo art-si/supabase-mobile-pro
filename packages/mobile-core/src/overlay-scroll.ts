@@ -13,7 +13,9 @@ export function useOverlayScrollLock(shouldLock: () => boolean) {
     if (requested && locks === 1) {
       const root = document.documentElement
       const { style } = document.body
-      const gap = window.innerWidth - root.clientWidth
+      // A stable root gutter still occupies its space when scrolling is locked.
+      const reserved = getComputedStyle(root).getPropertyValue('scrollbar-gutter').includes('stable')
+      const gap = reserved ? 0 : window.innerWidth - root.clientWidth
       const overflow = style.overflow
       const padding = style.paddingInlineEnd
       if (gap > 0) {
