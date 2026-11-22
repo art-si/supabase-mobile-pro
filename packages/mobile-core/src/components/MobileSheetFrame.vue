@@ -2,7 +2,7 @@
 // #ifdef H5
 import { nextTick, ref, watch } from 'vue'
 import WdRootPortal from '@wot-ui/ui/components/wd-root-portal/wd-root-portal.vue'
-import { useLockScroll } from '@wot-ui/ui/composables/useLockScroll'
+import { useOverlayScrollLock } from '../overlay-scroll'
 import { elementOf, type ElementTarget } from '../form-focus'
 // #endif
 
@@ -28,7 +28,7 @@ const mounted = ref(false)
 const presented = ref(false)
 const raised = ref(false)
 const surface = ref<ElementTarget>()
-useLockScroll(() => props.open && props.lockScroll)
+useOverlayScrollLock(() => (props.open || presented.value) && props.lockScroll)
 
 watch(() => props.open, async (open, _, onCleanup) => {
   if (typeof window === 'undefined' || (!open && !presented.value)) return

@@ -101,6 +101,10 @@
     gap: 6px;
     width: 100%;
     max-width: var(--mobile-workspace-max-width, 560px);
+    /* #ifdef H5 */
+    width: auto;
+    inset-inline-end: var(--mobile-overlay-scroll-gap, 0px);
+    /* #endif */
     margin-inline: auto;
     padding: 10px max(var(--mobile-workspace-inset), var(--mobile-safe-right))
       calc(10px + var(--mobile-safe-bottom)) max(var(--mobile-workspace-inset), var(--mobile-safe-left));

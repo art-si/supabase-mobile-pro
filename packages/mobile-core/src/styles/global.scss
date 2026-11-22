@@ -13,6 +13,18 @@
   @include icons.embed();
   @include actions.apply($prefix);
 
+  /* #ifdef H5 */
+  // Sheets and dialogs keep their own scrolling, including inside root portals.
+  .mobile-sheet__body .uni-scroll-view, .wd-popup, .mobile-confirm {
+    scrollbar-width: none;
+    overscroll-behavior: contain;
+  }
+  .mobile-sheet__body .uni-scroll-view::-webkit-scrollbar,
+  .wd-popup::-webkit-scrollbar, .mobile-confirm::-webkit-scrollbar {
+    display: none;
+  }
+  /* #endif */
+
   :root,
   page,
   .wd-root-portal {

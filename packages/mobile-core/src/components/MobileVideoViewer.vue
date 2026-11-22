@@ -4,6 +4,9 @@ import { onHide } from '@dcloudio/uni-app'
 import MobileAction from './MobileAction.vue'
 import MobileIcon from './MobileIcon.vue'
 import { useOverlayFocus } from '../overlay-focus'
+// #ifdef H5
+import { useOverlayScrollLock } from '../overlay-scroll'
+// #endif
 defineOptions({ options: { styleIsolation: 'apply-shared' } })
 const props = defineProps<{ src: string; poster?: string; trigger?: HTMLElement | null }>()
 const visible = defineModel<boolean>({ required: true })
@@ -13,6 +16,9 @@ const failed = ref(false), attempt = ref(0)
 const id = `mobile-video-viewer-${getCurrentInstance()!.uid}`
 const nativeScope = getCurrentInstance()?.proxy
 const shown = computed(() => visible.value && !!props.src)
+// #ifdef H5
+useOverlayScrollLock(() => shown.value)
+// #endif
 let opened = false
 function stop() {
   if (!opened) return
@@ -69,7 +75,6 @@ onBeforeUnmount(stop)
 </template>
 <style scoped>
 /* #ifdef H5 */
-:global(html:has(.mobile-video-viewer[open])), :global(body:has(.mobile-video-viewer[open])) { overflow: hidden; }
 /* #endif */
 .mobile-video-viewer { color: #f7f8fa; background: #181b21; border: 0; padding: 0; width: min(100%, 680px); height: 100vh; height: 100dvh; max-width: none; max-height: none; box-sizing: border-box; overscroll-behavior: contain; }
 .mobile-video-viewer[open], .mobile-video-viewer--native { display: grid; grid-template-rows: auto minmax(0, 1fr); }

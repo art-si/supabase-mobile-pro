@@ -3,7 +3,10 @@ let dialogSequence = 0
 </script>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+// #ifdef H5
+import { useOverlayScrollLock } from '../overlay-scroll'
+// #endif
 import { useOverlayFocus } from '../overlay-focus'
 import { activateActionKey, preventActionKey } from '../action-keyboard'
 
@@ -23,6 +26,20 @@ const emit = defineEmits<{ cancel: []; confirm: []; 'after-close': [] }>()
 
 const messageId = `mobile-confirm-message-${++dialogSequence}`
 const panel = ref<HTMLElement | { $el: HTMLElement }>()
+let usePopupLock = true
+// #ifdef H5
+usePopupLock = false
+const presented = ref(visible.value)
+watch(visible, open => { if (open) presented.value = true }, { flush: 'sync' })
+useOverlayScrollLock(() => visible.value || presented.value)
+// #endif
+function afterLeave() {
+  if (visible.value) return
+  // #ifdef H5
+  presented.value = false
+  // #endif
+  emit('after-close')
+}
 useOverlayFocus(visible, {
   panel: () => panel.value,
   initial: '.mobile-confirm__cancel',
@@ -44,11 +61,12 @@ function close(outcome: 'cancel' | 'confirm') {
     position="center"
     :z-index="70"
     :duration="220"
+    :lock-scroll="usePopupLock"
     transition="fade"
     :close-on-click-modal="!busy"
     custom-style="background:transparent;overflow:visible;"
     @update:model-value="close('cancel')"
-    @after-leave="emit('after-close')"
+    @after-leave="afterLeave"
   >
     <view
       ref="panel"

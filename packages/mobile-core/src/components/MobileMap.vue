@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { MapFence, MapPoint, MobileMapInstance, MobileMapPolygon, MobileMapSdk } from '../map'
+import { createMapImagePin } from '../map'
 
 defineOptions({ options: { styleIsolation: 'apply-shared' } })
 const props = withDefaults(defineProps<{
@@ -12,6 +13,7 @@ const props = withDefaults(defineProps<{
   draft?: MapPoint[]
   selectedFence?: string
   fenceColor?: string
+  fencePinImage?: string
 }>(), { label: '互动地图' })
 const emit = defineEmits<{
   ready: [map: MobileMapInstance, sdk: MobileMapSdk]
@@ -115,16 +117,18 @@ function drawFences() {
       polygons.push(polygon)
       overlays.push(polygon)
     }
-    const button = document.createElement('button')
-    button.type = 'button'
-    button.className = 'mobile-map__fence-label'
-    button.setAttribute('aria-label', fence.label)
+    const button = props.fencePinImage ? createMapImagePin(props.fencePinImage, fence.label) : document.createElement('button')
+    if (!props.fencePinImage) {
+      button.type = 'button'
+      button.className = 'mobile-map__fence-label'
+      button.setAttribute('aria-label', fence.label)
+      button.textContent = '禁钓'
+    }
     button.setAttribute('aria-pressed', String(selected))
-    button.textContent = '禁钓'
     button.addEventListener('click', (event) => { event.stopPropagation(); emit('fence', fence.id) })
     fenceLabels.set(fence.id, { button, polygons })
     overlays.push(new sdk.Marker({
-      position: fence.point, content: button, anchor: 'center', offset: new sdk.Pixel(0, 0),
+      position: fence.point, content: button, anchor: props.fencePinImage ? 'bottom-center' : 'center', offset: new sdk.Pixel(0, 0),
       zIndex: 70, bubble: false
     }))
   }
@@ -158,7 +162,7 @@ function drawDraft() {
 }
 onMounted(() => { mounted = true; void reload() })
 watch(() => props.reloadKey, () => { void reload() })
-watch(() => [props.fences, props.fenceColor], drawFences, { deep: true })
+watch(() => [props.fences, props.fenceColor, props.fencePinImage], drawFences, { deep: true })
 watch(() => props.selectedFence, updateFenceSelection)
 watch(() => props.draft, drawDraft, { deep: true })
 onBeforeUnmount(() => { mounted = false; clear() })
@@ -189,6 +193,10 @@ defineExpose({ reload, fitFences })
 .mobile-map :deep(.mobile-map__pin) { display: block; width: 32px; height: 42px; color: var(--mobile-workspace-accent); filter: drop-shadow(0 2px 3px #0005); }
 .mobile-map :deep(.mobile-map__fence-label) { display: grid; place-items: center; box-sizing: border-box; min-width: 48px; min-height: 48px; margin: 0; padding: 4px 10px; border: 2px solid var(--mobile-workspace-surface); border-radius: 12px; background: var(--mobile-workspace-surface); color: var(--mobile-map-fence-color, #B42331); font: 700 max(14px, 0.875rem)/1.4 sans-serif; white-space: nowrap; box-shadow: 0 1px 6px #0003; cursor: pointer; }
 .mobile-map :deep(.mobile-map__fence-label[aria-pressed='true']), .mobile-map :deep(.mobile-map__fence-label:focus-visible) { outline: 3px solid currentColor; outline-offset: 2px; }
+.mobile-map :deep(.mobile-map__image-pin) { display: grid; place-items: end center; width: 48px; height: 48px; padding: 0; margin: 0; border: 0; border-radius: 50%; appearance: none; background: transparent; box-shadow: none; cursor: pointer; }
+.mobile-map :deep(.mobile-map__image-pin img) { width: 100%; height: 100%; object-fit: contain; pointer-events: none; filter: drop-shadow(0 1px 2px #0005); transform-origin: center bottom; }
+.mobile-map :deep(.mobile-map__image-pin[aria-pressed='true'] img) { transform: scale(1.08); }
+.mobile-map :deep(.mobile-map__image-pin:focus-visible) { outline: 2px solid var(--mobile-workspace-accent, #205e68); outline-offset: 2px; }
 .mobile-map :deep(.mobile-map__vertex) { display: grid; place-items: center; width: 24px; height: 24px; border: 2px solid white; border-radius: 50%; background: var(--mobile-map-fence-color, #B42331); color: white; font: 700 12px/1 sans-serif; }
 @media (orientation: landscape) and (max-height: 500px) { .mobile-map__search { --mobile-search-suggestions-height: 38dvh; } }
 </style>

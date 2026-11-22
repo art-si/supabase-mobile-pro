@@ -69,6 +69,10 @@ function go(item: NavItem) {
   z-index: 20;
   width: 100%;
   max-width: var(--mobile-workspace-max-width, 560px);
+  /* #ifdef H5 */
+  width: auto;
+  inset-inline-end: var(--mobile-overlay-scroll-gap, 0px);
+  /* #endif */
   height: var(--mobile-nav-height, calc(64px + var(--mobile-safe-bottom, 0px)));
   margin-inline: auto;
   padding: 4px max(8px, var(--mobile-safe-right, 0px)) calc(4px + var(--mobile-safe-bottom, 0px))

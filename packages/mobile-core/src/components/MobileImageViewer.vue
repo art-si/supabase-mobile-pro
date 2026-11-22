@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useOverlayFocus } from '../overlay-focus'
+import { useOverlayScrollLock } from '../overlay-scroll'
 import MobileAction from './MobileAction.vue'
 import MobileIcon from './MobileIcon.vue'
 
 const props = defineProps<{ images: readonly string[]; label: string; trigger: HTMLElement | null }>()
 const index = defineModel<number>({ required: true })
 const shown = computed(() => index.value >= 0 && index.value < props.images.length)
+useOverlayScrollLock(() => shown.value)
 const panel = ref<HTMLDialogElement>()
 const stage = ref<HTMLElement>()
 const failed = ref(false)
@@ -99,7 +101,6 @@ function end(event: TouchEvent) {
 </template>
 
 <style scoped lang="scss">
-:global(html:has(.mobile-image-viewer[open])), :global(body:has(.mobile-image-viewer[open])) { overflow: hidden; }
 .mobile-image-viewer {
   color: #f7f8fa;
   background: #181b21;

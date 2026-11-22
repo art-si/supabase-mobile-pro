@@ -36,6 +36,20 @@ export interface MapFence {
   dashed?: boolean
 }
 
+/** An image marker keeps native keyboard activation and an explicit accessible name. */
+export function createMapImagePin(imageUrl: string, label: string) {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = 'mobile-map__image-pin'
+  button.setAttribute('aria-label', label)
+  const image = document.createElement('img')
+  image.alt = ''
+  image.draggable = false
+  image.src = imageUrl
+  button.append(image)
+  return button
+}
+
 /** Shared with search suggestions; the white eye and rim stay legible over map tiles. */
 export function createMapPin(title: string) {
   const element = document.createElement('span')

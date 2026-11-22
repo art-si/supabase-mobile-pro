@@ -103,7 +103,7 @@ function close() {
         ><MobileIcon name="close" size="20px" aria-hidden="true" /></button>
       </view>
       <view v-if="$slots.toolbar" class="mobile-sheet__toolbar"><slot name="toolbar" /></view>
-      <scroll-view class="mobile-sheet__body" :style="bodyStyle" scroll-y><slot /></scroll-view>
+      <scroll-view class="mobile-sheet__body" :style="bodyStyle" scroll-y enhanced :show-scrollbar="false"><slot /></scroll-view>
       <view v-if="$slots.footer" class="mobile-sheet__footer"><slot name="footer" /></view>
       <slot name="overlay" />
     </view>

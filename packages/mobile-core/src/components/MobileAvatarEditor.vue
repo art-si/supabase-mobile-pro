@@ -5,6 +5,7 @@ import MobileAction from './MobileAction.vue'
 import MobileIcon from './MobileIcon.vue'
 // #ifdef H5
 import MobileAvatarCropper from './MobileAvatarCropper.vue'
+import { useOverlayScrollLock } from '../overlay-scroll'
 // #endif
 import { chooseMediaFiles } from '../media-choose'
 import { createUploadQueue } from '../upload-queue'
@@ -20,6 +21,9 @@ const selecting=ref(false),uploading=ref(false),visible=ref(false),raw=ref(''),l
 const panel=ref(),cropper=ref<{setRotate:(angle:number)=>void}>()
 let version=0, cropVersion=0, cropScope=props.scope, disposed=false,releaseRaw:(()=>void)|undefined,angle=0,candidate=''
 const busy=computed(()=>selecting.value||uploading.value||visible.value)
+// #ifdef H5
+useOverlayScrollLock(() => visible.value)
+// #endif
 watch(busy,value=>emit('busy',value),{immediate:true})
 useOverlayFocus(visible,{panel:()=>panel.value,cancel:cancelCrop,initial:'.mobile-avatar-cropper__cancel, .wd-img-cropper__cancel'})
 const queue=createUploadQueue<{key:string;path:string}>(async(item,signal)=>{
