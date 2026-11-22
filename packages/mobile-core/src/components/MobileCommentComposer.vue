@@ -11,9 +11,10 @@ withDefaults(defineProps<{
   emojiOpen?: boolean
   showCamera?: boolean
   showAttachments?: boolean
+  attachmentLabel?: string
   emojiTriggerId?: string
   sendLabel?: string
-}>(), { sendLabel: '发表评论', showAttachments: true })
+}>(), { sendLabel: '发表评论', showAttachments: true, attachmentLabel: '添加图片 / 视频' })
 const emit = defineEmits<{ emoji: []; camera: []; media: []; send: [] }>()
 </script>
 
@@ -27,7 +28,7 @@ const emit = defineEmits<{ emoji: []; camera: []; media: []; send: [] }>()
       <view class="mobile-comment-composer__tools">
         <MobileAction :id="emojiTriggerId" class="mobile-comment-composer__tool" variant="icon" aria-label="表情" :aria-expanded="emojiOpen" :disabled="disabled" @click="emit('emoji')"><MobileIcon name="emoji" :size="24" /></MobileAction>
         <MobileAction v-if="showCamera" class="mobile-comment-composer__tool" variant="icon" aria-label="拍照" :disabled="disabled || mediaDisabled" @click="emit('camera')"><MobileIcon name="camera" :size="24" /></MobileAction>
-        <MobileAction v-if="showAttachments" class="mobile-comment-composer__tool" variant="icon" aria-label="添加图片 / 视频" :disabled="disabled || mediaDisabled" @click="emit('media')"><MobileIcon name="photo" :size="24" /></MobileAction>
+        <MobileAction v-if="showAttachments" class="mobile-comment-composer__tool" variant="icon" :aria-label="attachmentLabel" :disabled="disabled || mediaDisabled" @click="emit('media')"><MobileIcon name="photo" :size="24" /></MobileAction>
       </view>
       <MobileAction class="mobile-comment-composer__send" :aria-label="sendLabel" :disabled="disabled || sendDisabled" @click="emit('send')">
         <text class="mobile-comment-composer__send-text">发送</text><MobileIcon class="mobile-comment-composer__send-icon" name="send" :size="22" />
@@ -82,7 +83,12 @@ const emit = defineEmits<{ emoji: []; camera: []; media: []; send: [] }>()
   box-shadow: none;
 }
 /* #endif */
-.mobile-comment-composer .mobile-comment-composer__input :deep(.mobile-field__control--textarea) { min-height: 84px; }
+.mobile-comment-composer .mobile-comment-composer__input :deep(.mobile-field__control--textarea) {
+  min-height: var(--mobile-comment-input-height, 84px);
+  height: var(--mobile-comment-input-height, 84px);
+  // Uni's native textarea fills its wrapper. Block padding would extend the editing area over the toolbar.
+  padding-block: 0;
+}
 .mobile-comment-composer__attachments:empty { display: none; }
 .mobile-comment-composer__meta {
   display: flex;
