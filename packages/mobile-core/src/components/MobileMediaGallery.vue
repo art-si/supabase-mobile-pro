@@ -8,10 +8,12 @@ import MobileVideoViewer from './MobileVideoViewer.vue'
 import { captureVideoPoster, clearVideoPosterScope, createVideoPosterDelivery } from '../video-poster'
 import { createUploadCancellation } from '../upload-progress'
 import type { MobileGalleryMedia } from '../gallery-media'
+import { useLongPressActionGuard } from '../long-press-action'
 
 defineOptions({ options: { styleIsolation: 'apply-shared' } })
 const props = defineProps<{ media: readonly MobileGalleryMedia[]; label: string; full?: boolean; compact?: boolean; busy?: boolean; scope?: string | number }>()
 const emit = defineEmits<{ retry: []; ready: [value: boolean] }>()
+const allowAction = useLongPressActionGuard()
 const failed = ref<string[]>([]), loaded = ref<string[]>([]), attempt = ref(0)
 const posters = ref<Record<string, string>>({})
 const posterPending = ref<string[]>([]), posterFailed = ref<string[]>([])
@@ -78,7 +80,7 @@ function duration(value?: number) {
   return `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}`
 }
 function open(asset: MobileGalleryMedia) {
-  if (!asset.url) return
+  if (!allowAction() || !asset.url) return
   if (asset.kind === 'video') {
     // #ifdef H5
     trigger.value = document.activeElement instanceof HTMLElement ? document.activeElement : null
@@ -90,7 +92,7 @@ function open(asset: MobileGalleryMedia) {
   }
 }
 function posterError(asset: MobileGalleryMedia) { delete posters.value[asset.id]; if (!posterFailed.value.includes(asset.id)) posterFailed.value.push(asset.id) }
-function retry() { failed.value = []; loaded.value = []; posterFailed.value = []; attempt.value++; loadPosters(true); emit('retry') }
+function retry() { if (!allowAction()) return; failed.value = []; loaded.value = []; posterFailed.value = []; attempt.value++; loadPosters(true); emit('retry') }
 </script>
 <template>
   <view class="mobile-media-gallery">

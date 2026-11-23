@@ -1,4 +1,8 @@
-import { onScopeDispose, watch, type Ref } from 'vue'
+import { inject, provide, onScopeDispose, watch, type InjectionKey, type Ref } from 'vue'
+
+const actionGuard: InjectionKey<() => boolean> = Symbol('mobile-long-press-action')
+/** Descendant actions can synchronously respect a card's long-press state, including native MP taps. */
+export function useLongPressActionGuard() { return inject(actionGuard, () => true) }
 
 /** Pair a native longpress/context menu with a visible action, without also activating its card. */
 export function useLongPressAction(
@@ -6,9 +10,13 @@ export function useLongPressAction(
   enabled: () => boolean,
   target?: Readonly<Ref<unknown>>
 ) {
+  const inherited = useLongPressActionGuard()
   let held = false, blockedUntil = 0
-  function hold() {
-    if (!enabled()) return
+  function hold(event?: { target?: unknown }) {
+    // #ifdef H5
+    if ((event?.target as Element | undefined)?.closest?.('[role="dialog"], [data-longpress-ignore]')) return
+    // #endif
+    if (!enabled() || !inherited()) return
     held = true
     action()
   }
@@ -17,7 +25,8 @@ export function useLongPressAction(
     held = false
     blockedUntil = Date.now() + 500
   }
-  function allowClick() { return !held && Date.now() >= blockedUntil }
+  function allowClick() { return inherited() && !held && Date.now() >= blockedUntil }
+  provide(actionGuard, allowClick)
   function reset() { held = false; blockedUntil = 0 }
   let detach = () => {}
   // #ifdef H5
