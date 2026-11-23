@@ -17,8 +17,8 @@ export function encodeVideoFramePng(frame: { width: number; height: number; data
     for (let x = 0; x < outWidth; x++) {
       const sourceX = Math.min(width - 1, Math.floor((x + .5) * width / outWidth))
       const from = (sourceY * width + sourceX) * 4, to = y * stride + 1 + x * 4
-      rows[to] = source[from]; rows[to + 1] = source[from + 1]
-      rows[to + 2] = source[from + 2]; rows[to + 3] = source[from + 3]
+      rows[to] = source[from]!; rows[to + 1] = source[from + 1]!
+      rows[to + 2] = source[from + 2]!; rows[to + 3] = source[from + 3]!
     }
   }
   const blocks = Math.ceil(rows.length / 65535), deflate = new Uint8Array(rows.length + blocks * 5 + 6)
@@ -30,7 +30,7 @@ export function encodeVideoFramePng(frame: { width: number; height: number; data
     deflate[offset++] = length & 255; deflate[offset++] = length >>> 8
     deflate[offset++] = (~length) & 255; deflate[offset++] = (~length >>> 8) & 255
     deflate.set(rows.subarray(start, start + length), offset); offset += length
-    for (let i = start; i < start + length; i++) { a = (a + rows[i]) % 65521; b = (b + a) % 65521 }
+    for (let i = start; i < start + length; i++) { a = (a + rows[i]!) % 65521; b = (b + a) % 65521 }
   }
   new DataView(deflate.buffer).setUint32(offset, ((b << 16) | a) >>> 0)
   const header = new Uint8Array(13), view = new DataView(header.buffer)
@@ -50,7 +50,7 @@ function chunk(type: string, data: Uint8Array) {
   output.set(data, 8)
   let crc = 0xffffffff
   for (let i = 4; i < output.length - 4; i++) {
-    crc ^= output[i]
+    crc ^= output[i]!
     for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0)
   }
   view.setUint32(output.length - 4, (crc ^ 0xffffffff) >>> 0)
