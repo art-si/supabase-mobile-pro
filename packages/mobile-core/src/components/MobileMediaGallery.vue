@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { preventActionKey, activateButtonKey } from '../action-keyboard'
-import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { onHide, onShow } from '@dcloudio/uni-app'
 import MobileIcon from './MobileIcon.vue'
 import MobileImagePreview from './MobileImagePreview.vue'
 import MobileVideoViewer from './MobileVideoViewer.vue'
-import { captureVideoPoster, clearVideoPosterScope } from '../video-poster'
+import { captureVideoPoster, clearVideoPosterScope, createVideoPosterDelivery } from '../video-poster'
+import { createUploadCancellation } from '../upload-progress'
 import type { MobileGalleryMedia } from '../gallery-media'
 
 defineOptions({ options: { styleIsolation: 'apply-shared' } })
@@ -19,23 +20,33 @@ const selected = shallowRef<MobileGalleryMedia | null>(null), videoOpen = ref(fa
 const trigger = shallowRef<HTMLElement | null>(null)
 const imageViewer = ref<InstanceType<typeof MobileImagePreview>>()
 let version = 0, visible = true
-let controller: AbortController | undefined
+let controller: ReturnType<typeof createUploadCancellation> | undefined
+const deliverPoster = createVideoPosterDelivery(nextTick)
 function stopPosters() { version++; controller?.abort(); controller = undefined; posterPending.value = [] }
 function loadPosters(force = false) {
   stopPosters()
   if (!visible) return
   const current = version
-  controller = typeof AbortController === 'undefined' ? undefined : new AbortController()
+  controller = createUploadCancellation()
+  const receivePoster = (id: string, poster: string) => {
+    const apply = () => {
+      if (current !== version || !visible) return
+      posterPending.value = posterPending.value.filter(item => item !== id)
+      if (poster) { posters.value[id] = poster; posterFailed.value = posterFailed.value.filter(item => item !== id) }
+      else if (!posterFailed.value.includes(id)) posterFailed.value.push(id)
+    }
+    // #ifdef MP-WEIXIN
+    return deliverPoster(apply, () => current === version && visible)
+    // #endif
+    // #ifndef MP-WEIXIN
+    apply()
+    // #endif
+  }
   for (const asset of props.media) {
-    if (asset.poster && !force) posters.value[asset.id] = asset.poster
+    if (asset.poster && !force) void receivePoster(asset.id, asset.poster)
     else if (asset.kind === 'video' && asset.url && (force || !posters.value[asset.id])) {
       posterPending.value.push(asset.id)
-      void captureVideoPoster(asset.url, { scope: props.scope, cacheKey: asset.id, signal: controller?.signal, force }).then(poster => {
-        if (current !== version) return
-        posterPending.value = posterPending.value.filter(id => id !== asset.id)
-        if (poster) { posters.value[asset.id] = poster; posterFailed.value = posterFailed.value.filter(id => id !== asset.id) }
-        else if (!posterFailed.value.includes(asset.id)) posterFailed.value.push(asset.id)
-      })
+      void captureVideoPoster(asset.url, { scope: props.scope, cacheKey: asset.id, signal: controller?.signal, force }).then(poster => receivePoster(asset.id, poster))
     }
   }
 }

@@ -1,4 +1,7 @@
 import type { UploadSignal } from './upload-progress'
+// #ifdef MP-WEIXIN
+import { decodeWeixinVideoPoster } from './video-poster-mini'
+// #endif
 
 export interface VideoPosterOptions {
   /** An account/session boundary. Omit it to disable the reusable frame cache. */
@@ -16,6 +19,21 @@ const frames = new Map<string, { scope: string | number; poster: string; expires
 const CACHE_TTL = 10 * 60 * 1000
 const MAX_CACHE_BYTES = 8 * 1024 * 1024
 let active = 0
+/** Even warm cache hits need separate Mini Program renders: six inline PNGs in
+ * one microtask would exceed setData's bridge budget. The caller supplies its
+ * renderer's nextTick so each assignment is flushed before the next begins.
+ */
+export function createVideoPosterDelivery(flush: () => Promise<unknown>, yieldTask = () => new Promise<void>(resolve => setTimeout(resolve, 0))) {
+  let previous = Promise.resolve()
+  return (deliver: () => void, current = () => true) => {
+    const next = previous.then(async () => {
+      if (!current()) return
+      deliver(); await flush(); await yieldTask()
+    })
+    previous = next.catch(() => {})
+    return next
+  }
+}
 function frameKey(options: VideoPosterOptions, path = '') {
   return options.scope == null ? '' : JSON.stringify([options.scope, options.cacheKey || path])
 }
@@ -135,9 +153,14 @@ function decodeVideoPoster(path: string, registerCancel: (cancel: () => void) =>
     video.src = path; video.load()
   })
   // #endif
+  // #ifdef MP-WEIXIN
+  return decodeWeixinVideoPoster(path, registerCancel)
+  // #endif
   // #ifndef H5
+  // #ifndef MP-WEIXIN
   // chooseMedia supplies a genuine thumbTempFilePath for newly selected native videos.
   // Remote native media needs a stored poster; no unsupported thumbnail API is invented.
   return Promise.resolve('')
+  // #endif
   // #endif
 }

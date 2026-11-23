@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { preventActionKey, activateButtonKey } from '../action-keyboard'
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import MobileEvidence from "./MobileEvidence.vue";
 import MobileBottomSheet from "./MobileBottomSheet.vue";
 import MobileIcon from "./MobileIcon.vue";
@@ -8,8 +8,8 @@ import MobileVideoViewer from "./MobileVideoViewer.vue";
 import MobileImagePreview from "./MobileImagePreview.vue";
 import { chooseMediaFiles, type MediaChooseSource, type ChosenMedia } from "../media-choose";
 import { createUploadQueue } from "../upload-queue";
-import { captureVideoPoster, clearVideoPosterScope, rememberVideoPoster } from "../video-poster";
-import type { UploadOptions } from "../upload-progress";
+import { captureVideoPoster, clearVideoPosterScope, createVideoPosterDelivery, rememberVideoPoster } from "../video-poster";
+import { createUploadCancellation, type UploadOptions } from "../upload-progress";
 import type { MediaUploadEntry, UploadedMedia } from "../media-upload";
 defineOptions({ options: { styleIsolation: "apply-shared" } });
 const props = withDefaults(
@@ -208,29 +208,38 @@ function cancelPending() {
     item.needsLogin = false;
   }
 }
+const deliverPoster = createVideoPosterDelivery(nextTick);
 watch(
   () => [props.scope, props.posterScope, props.active, items.value.map((p) => `${p.key}:${previewPath(p)}:${p.asset?.id || ''}`).join("|")],
   (_value, _old, onCleanup) => {
     if (!props.active) return;
     const scope = props.scope;
     const posterScope = props.posterScope ?? scope;
-    const controller = typeof AbortController === 'undefined' ? undefined : new AbortController();
-    onCleanup(() => controller?.abort());
+    const controller = createUploadCancellation();
+    onCleanup(controller.abort);
     for (const item of items.value) {
       if (kind(item) !== 'video') continue;
       if (item.poster && item.asset) rememberVideoPoster(item.poster, { scope: posterScope, cacheKey: item.asset.id });
       if (!item.poster && previewPath(item))
-        void captureVideoPoster(previewPath(item), { scope: posterScope, cacheKey: item.asset?.id || item.key, signal: controller?.signal }).then((poster) => {
-          if (
+        void captureVideoPoster(previewPath(item), { scope: posterScope, cacheKey: item.asset?.id || item.key, signal: controller.signal }).then((poster) => {
+          const current = () =>
             !disposed &&
-            !controller?.signal.aborted &&
+            props.active &&
+            !controller.signal.aborted &&
             scope === props.scope &&
-            items.value.includes(item) &&
-            poster
-          ) {
+            posterScope === (props.posterScope ?? props.scope) &&
+            items.value.includes(item);
+          const apply = () => {
+            if (!current() || !poster) return;
             item.poster = poster;
             if (item.asset) rememberVideoPoster(poster, { scope: posterScope, cacheKey: item.asset.id });
-          }
+          };
+          // #ifdef MP-WEIXIN
+          return deliverPoster(apply, current);
+          // #endif
+          // #ifndef MP-WEIXIN
+          apply();
+          // #endif
         });
     }
   },
