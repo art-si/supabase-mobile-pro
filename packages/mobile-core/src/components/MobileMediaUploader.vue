@@ -38,6 +38,8 @@ const props = withDefaults(
     compact?: boolean;
     /** Host-owned native camera adapter; shared components have no plugin dependency. */
     cameraPicker?: () => Promise<ChosenMedia[]>;
+    /** Optional lifecycle-aware picker for both album and camera selections. */
+    mediaPicker?: (count: number, accept: readonly ("image" | "video")[], source?: MediaChooseSource) => Promise<ChosenMedia[]>;
   }>(),
   {
     limit: 9,
@@ -243,7 +245,8 @@ async function add(source?: MediaChooseSource) {
   const selection = ++selectionVersion;
   selectionNotice.value = "";
   try {
-    const chosen = source === 'camera' && props.cameraPicker
+    const chosen = props.mediaPicker ? await props.mediaPicker(props.limit - items.value.length, props.accept, source)
+      : source === 'camera' && props.cameraPicker
       ? await props.cameraPicker()
       : await chooseMediaFiles(props.limit - items.value.length, props.accept, source);
     if (disposed || !props.active || props.disabled || scope !== props.scope || selection !== selectionVersion) {
