@@ -31,7 +31,7 @@ const emit = defineEmits<{ emoji: []; camera: []; media: []; send: [] }>()
         <button v-if="showAttachments" class="mobile-action mobile-action--icon mobile-comment-composer__tool" :aria-label="attachmentLabel" :disabled="disabled || mediaDisabled" @click="emit('media')" role="button" :tabindex="(disabled || mediaDisabled) ? -1 : 0" :aria-disabled="(disabled || mediaDisabled) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey"><MobileIcon name="photo" :size="24" /></button>
       </view>
       <button class="mobile-action mobile-comment-composer__send" :aria-label="sendLabel" :disabled="disabled || sendDisabled" @click="emit('send')" role="button" :tabindex="(disabled || sendDisabled) ? -1 : 0" :aria-disabled="(disabled || sendDisabled) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">
-        <text class="mobile-comment-composer__send-text">发送</text><MobileIcon class="mobile-comment-composer__send-icon" name="send" :size="22" />
+        <text class="mobile-comment-composer__send-text">发送</text><view class="mobile-comment-composer__send-icon"><MobileIcon name="send" :size="22" /></view>
       </button>
     </view>
   </view>
