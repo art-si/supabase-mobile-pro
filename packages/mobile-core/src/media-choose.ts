@@ -1,3 +1,5 @@
+import { withMediaPickerPage } from './media-picker-session';
+
 export interface ChosenMedia {
   path: string;
   kind: "image" | "video";
@@ -86,7 +88,11 @@ export function chooseMediaFiles(
   });
   // #endif
   // #ifndef H5
-  return new Promise((resolve, reject) => {
+  return withMediaPickerPage(() => new Promise<ChosenMedia[]>((resolve, reject) => {
+    if (typeof uni.chooseMedia !== 'function') {
+      reject(Object.assign(new Error('MEDIA_SELECTION_UNAVAILABLE'), { code: 'MEDIA_SELECTION_UNAVAILABLE' }));
+      return;
+    }
     uni.chooseMedia({
       count: maximum,
       mediaType: [...kinds],
@@ -105,14 +111,19 @@ export function chooseMediaFiles(
       },
       fail(error) {
         if (error.errMsg?.includes("cancel")) resolve([]);
-        else
+        else {
+          const nativeMessage = String(error.errMsg || '');
+          const code = /not declared|not configured|incomplete privacy/i.test(nativeMessage) ? 'MEDIA_PRIVACY_UNDECLARED'
+            : /privacy|agreement/i.test(nativeMessage) ? 'MEDIA_PRIVACY_REQUIRED'
+            : /denied|auth deny|authorize:deny|permission/i.test(nativeMessage) ? 'MEDIA_PERMISSION_DENIED' : 'MEDIA_SELECTION_FAILED';
           reject(
-            Object.assign(new Error("MEDIA_SELECTION_FAILED"), {
-              code: "MEDIA_SELECTION_FAILED",
+            Object.assign(new Error(code), {
+              code, nativeMessage, nativeCode: 'errCode' in error ? error.errCode : undefined,
             }),
           );
+        }
       },
     });
-  });
+  }));
   // #endif
 }

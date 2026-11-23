@@ -385,7 +385,7 @@ defineExpose({ uploading, choosing, choose: add });
       :compact="compact"
       remove-label="移除"
       custom-preview
-      @upload="add"
+      @upload="add()"
       @remove="remove"
       @preview="open"
       @swap="swap"

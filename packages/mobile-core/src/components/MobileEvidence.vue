@@ -231,7 +231,7 @@ defineExpose({ preview });
           :disabled="removeUnavailable"
           :aria-disabled="removeUnavailable || undefined"
           hover-class="mobile-action--pressed"
-          @click="remove(index)"
+          @click.stop="remove(index)"
           @keydown="preventActionKey"
           @keyup="activateActionKey($event, () => remove(index, true))"
         >
@@ -299,6 +299,8 @@ defineExpose({ preview });
 .mobile-evidence--overlay-remove .mobile-evidence__grid {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, max(104px, 6.5rem)), 1fr));
   align-items: stretch;
+  gap: 20px 8px;
+  padding-top: 18px;
 }
 .mobile-evidence--overlay-remove .mobile-evidence__item {
   position: relative;
@@ -306,8 +308,8 @@ defineExpose({ preview });
 }
 .mobile-evidence--overlay-remove .mobile-action.mobile-evidence__remove {
   position: absolute;
-  right: 0;
-  top: 0;
+  right: -6px;
+  top: -18px;
   z-index: 3;
   width: 48px;
   height: 48px;
@@ -316,17 +318,15 @@ defineExpose({ preview });
   border: 0;
   background: transparent;
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .mobile-evidence--compact .mobile-evidence__grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px 8px;
-  padding-top: 18px;
 }
-/* Keep the 48px remove target clear of the center preview/play target in small tiles. */
-.mobile-evidence--compact.mobile-evidence--overlay-remove .mobile-action.mobile-evidence__remove {
-  top: -18px;
-  right: -6px;
-}
+/* Every uploader uses the same corner mark; the 48px target stays above the
+   centre preview/play target, including three-column compact thumbnails. */
 .mobile-evidence__remove-mark {
   display: grid;
   place-items: center;
