@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import MobileAction from './MobileAction.vue'
+import { preventActionKey, activateButtonKey } from '../action-keyboard'
 import MobileBottomSheet from './MobileBottomSheet.vue'
 import MobileSegmented from './MobileSegmented.vue'
 import { computed, ref } from 'vue'
@@ -17,7 +17,7 @@ function choose(value:string){visible.value=false;emit('select',value)}
   <MobileBottomSheet v-model="visible" :title="title" close-label="关闭表情选择" :trigger-id="triggerId" initial-focus=".mobile-emoji-picker__choice">
     <view v-if="!options" class="mobile-emoji-picker__categories"><MobileSegmented v-model="category" label="表情分类" :options="EMOJI_CATEGORIES" /></view>
     <view class="mobile-emoji-picker" :aria-label="options ? '常用表情' : `${EMOJI_CATEGORIES.find(item=>item.value===category)!.label}表情`">
-      <MobileAction v-for="emoji in choices" :key="emoji.value" class="mobile-emoji-picker__choice" :aria-label="`插入${emoji.label}表情`" @click="choose(emoji.value)"><text aria-hidden="true">{{ emoji.value }}</text></MobileAction>
+      <button v-for="emoji in choices" :key="emoji.value" class="mobile-action mobile-emoji-picker__choice" :aria-label="`插入${emoji.label}表情`" @click="choose(emoji.value)" role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey"><text aria-hidden="true">{{ emoji.value }}</text></button>
     </view>
   </MobileBottomSheet>
 </template>

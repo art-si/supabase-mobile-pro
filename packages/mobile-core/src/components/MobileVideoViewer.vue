@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { preventActionKey, activateButtonKey } from '../action-keyboard'
 import { computed, getCurrentInstance, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { onHide } from '@dcloudio/uni-app'
-import MobileAction from './MobileAction.vue'
 import MobileIcon from './MobileIcon.vue'
 import { useOverlayFocus } from '../overlay-focus'
 // #ifdef H5
@@ -55,20 +55,20 @@ onBeforeUnmount(stop)
   <!-- #ifdef H5 -->
   <dialog ref="panel" class="mobile-video-viewer" aria-label="视频预览" aria-modal="true" @cancel.prevent="close">
     <template v-if="shown">
-      <header class="mobile-video-viewer__bar"><h2>视频</h2><MobileAction variant="icon" class="mobile-video-viewer__close" aria-label="关闭视频预览" @click="close"><MobileIcon name="close" size="22px" /></MobileAction></header>
+      <header class="mobile-video-viewer__bar"><h2>视频</h2><button class="mobile-action mobile-action--icon mobile-video-viewer__close" aria-label="关闭视频预览" @click="close" role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey"><MobileIcon name="close" size="22px" /></button></header>
       <div ref="stage" class="mobile-video-viewer__stage" tabindex="-1">
         <video v-if="!failed" :id="id" :key="attempt" :src="src" :poster="poster" class="mobile-video-viewer__player" controls autoplay playsinline :show-fullscreen-btn="false" object-fit="contain" @error="failed = true" />
-        <div v-else class="mobile-video-viewer__error"><span role="alert">视频暂时无法播放</span><MobileAction class="mobile-video-viewer__retry" @click="retry">重新播放</MobileAction></div>
+        <div v-else class="mobile-video-viewer__error"><span role="alert">视频暂时无法播放</span><button class="mobile-action mobile-video-viewer__retry" @click="retry" role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">重新播放</button></div>
       </div>
     </template>
   </dialog>
   <!-- #endif -->
   <!-- #ifndef H5 -->
   <view v-if="shown" class="mobile-video-viewer mobile-video-viewer--native" role="dialog" aria-label="视频预览" aria-modal="true">
-    <view class="mobile-video-viewer__bar"><text>视频</text><MobileAction variant="icon" class="mobile-video-viewer__close" aria-label="关闭视频预览" @click="close"><MobileIcon name="close" size="22px" /></MobileAction></view>
+    <view class="mobile-video-viewer__bar"><text>视频</text><button class="mobile-action mobile-action--icon mobile-video-viewer__close" aria-label="关闭视频预览" @click="close" role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey"><MobileIcon name="close" size="22px" /></button></view>
     <view class="mobile-video-viewer__stage">
       <video v-if="!failed" :id="id" :key="attempt" :src="src" :poster="poster" class="mobile-video-viewer__player" controls autoplay :show-fullscreen-btn="false" object-fit="contain" @error="failed = true" />
-      <view v-else class="mobile-video-viewer__error"><text role="alert">视频暂时无法播放</text><MobileAction class="mobile-video-viewer__retry" @click="retry">重新播放</MobileAction></view>
+      <view v-else class="mobile-video-viewer__error"><text role="alert">视频暂时无法播放</text><button class="mobile-action mobile-video-viewer__retry" @click="retry" role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">重新播放</button></view>
     </view>
   </view>
   <!-- #endif -->

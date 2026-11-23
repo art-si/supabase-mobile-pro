@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { preventActionKey, activateButtonKey } from '../action-keyboard'
 import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { onHide, onShow } from '@dcloudio/uni-app'
-import MobileAction from './MobileAction.vue'
 import MobileIcon from './MobileIcon.vue'
 import MobileImagePreview from './MobileImagePreview.vue'
 import MobileVideoViewer from './MobileVideoViewer.vue'
@@ -85,20 +85,20 @@ function retry() { failed.value = []; loaded.value = []; posterFailed.value = []
   <view class="mobile-media-gallery">
     <view class="mobile-media-gallery__grid" :class="{ 'is-full': full, 'is-single': media.length === 1, 'is-compact': compact }" :aria-label="label">
       <view v-for="(asset,index) in media" :key="`${asset.id}-${asset.url || ''}-${attempt}`" class="mobile-media-gallery__item" :style="{ '--gallery-ratio': String(ratio(asset)) }">
-        <MobileAction v-if="asset.url && !failed.includes(asset.id)" class="mobile-media-gallery__preview" :aria-label="asset.kind === 'video' ? `播放视频，第${index + 1}项${duration(asset.duration) ? '，时长' + duration(asset.duration) : ''}` : `${label}，查看大图，第${index + 1}项`" @click="open(asset)">
+        <button v-if="asset.url && !failed.includes(asset.id)" class="mobile-action mobile-media-gallery__preview" :aria-label="asset.kind === 'video' ? `播放视频，第${index + 1}项${duration(asset.duration) ? '，时长' + duration(asset.duration) : ''}` : `${label}，查看大图，第${index + 1}项`" @click="open(asset)" role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">
           <template v-if="asset.kind === 'video'">
             <image v-if="posters[asset.id]" class="mobile-media-gallery__image" :src="posters[asset.id]" :mode="full || (!compact && media.length === 1) ? 'aspectFit' : 'aspectFill'" aria-hidden="true" @load="imageLoaded(asset,$event)" @error="posterError(asset)" />
             <view class="mobile-media-gallery__play" aria-hidden="true"><wd-icon name="play-circle" size="40px" /></view>
             <text v-if="duration(asset.duration)" class="mobile-media-gallery__duration" aria-hidden="true">{{ duration(asset.duration) }}</text>
           </template>
           <image v-else class="mobile-media-gallery__image" :src="asset.url" :mode="full || (!compact && media.length === 1) ? 'aspectFit' : 'aspectFill'" lazy-load aria-hidden="true" @load="imageLoaded(asset,$event)" @error="failed.push(asset.id)" />
-        </MobileAction>
+        </button>
         <view v-else class="mobile-media-gallery__unavailable" role="status"><MobileIcon name="photo" size="24px" /><text>{{ asset.kind === 'video' ? '视频暂不可用' : '照片暂不可用' }}</text></view>
       </view>
     </view>
     <text v-if="posterPending.length && !posterFailed.length" class="mobile-media-gallery__status" role="status">正在加载视频封面…</text>
-    <view v-if="posterFailed.length" class="mobile-media-gallery__recovery"><text class="mobile-media-gallery__status" role="status">封面暂未加载，可点击播放</text><MobileAction class="mobile-media-gallery__retry" :disabled="busy || !!posterPending.length" @click="retry">{{ busy || posterPending.length ? '正在加载…' : '重新加载封面' }}</MobileAction></view>
-    <MobileAction v-if="failed.length || media.some(asset => !asset.url)" class="mobile-media-gallery__retry" :disabled="busy" @click="retry">{{ busy ? '正在读取…' : '重新读取附件' }}</MobileAction>
+    <view v-if="posterFailed.length" class="mobile-media-gallery__recovery"><text class="mobile-media-gallery__status" role="status">封面暂未加载，可点击播放</text><button class="mobile-action mobile-media-gallery__retry" :disabled="busy || !!posterPending.length" @click="retry" role="button" :tabindex="(busy || !!posterPending.length) ? -1 : 0" :aria-disabled="(busy || !!posterPending.length) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">{{ busy || posterPending.length ? '正在加载…' : '重新加载封面' }}</button></view>
+    <button v-if="failed.length || media.some(asset => !asset.url)" class="mobile-action mobile-media-gallery__retry" :disabled="busy" @click="retry" role="button" :tabindex="(busy) ? -1 : 0" :aria-disabled="(busy) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">{{ busy ? '正在读取…' : '重新读取附件' }}</button>
     <MobileImagePreview ref="imageViewer" />
     <MobileVideoViewer v-model="videoOpen" :src="selected?.url || ''" :poster="selected ? posters[selected.id] : undefined" :trigger="trigger" />
   </view>

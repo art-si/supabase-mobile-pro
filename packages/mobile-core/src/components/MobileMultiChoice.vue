@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { preventActionKey, activateButtonKey } from '../action-keyboard'
 import { computed, getCurrentInstance, ref, watch } from "vue";
 import { revealControl } from "../form-focus";
-import MobileAction from "./MobileAction.vue";
 import MobileField from "./MobileField.vue";
 import MobilePickerTrigger from "./MobilePickerTrigger.vue";
 import MobileBottomSheet from "./MobileBottomSheet.vue";
@@ -140,14 +140,14 @@ function confirm() {
       role="group"
       :aria-label="`${label}多选列表`"
     >
-      <MobileAction
+      <button
         v-for="name in choices"
         :key="name"
-        class="mobile-multi-choice__option"
+        class="mobile-action mobile-multi-choice__option"
         role="checkbox"
         :aria-checked="selected.includes(name)"
         @click="toggle(name)"
-      >
+       tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">
         <text class="mobile-multi-choice__name">{{ name }}</text
         ><view aria-hidden="true"
           ><wd-checkbox
@@ -157,7 +157,7 @@ function confirm() {
             checked-color="var(--tms-primary,var(--lake))"
             custom-style="--wot-checkbox-icon-size:22px;pointer-events:none"
         /></view>
-      </MobileAction>
+      </button>
       <text v-if="!choices.length" class="mobile-multi-choice__hint"
         >没有匹配的预设，可在下方添加。</text
       >
@@ -172,18 +172,16 @@ function confirm() {
             placeholder="输入名称，可用顿号分隔"
             :maxlength="maxlength"
             @confirm="add"
-          /><MobileAction class="secondary" @click="add"
-            >添加</MobileAction
-          ></view
+          /><button class="mobile-action secondary" @click="add"
+             role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">添加</button></view
         >
         <text v-if="error" class="mobile-multi-choice__error" role="alert">{{
           error
         }}</text>
-        <MobileAction class="primary" @click="confirm"
-          >确定{{
+        <button class="mobile-action primary" @click="confirm"
+           role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">确定{{
             !single && selected.length ? `（已选 ${selected.length} 项）` : ""
-          }}</MobileAction
-        >
+          }}</button>
       </view></template
     >
   </MobileBottomSheet>

@@ -44,3 +44,15 @@ export function activateActionKey(event: KeyboardEvent, activate: () => void) {
   // #endif
   activate()
 }
+
+/** Reuse the owning button's click handler instead of duplicating its action. */
+export function activateButtonKey(event: KeyboardEvent) {
+  // #ifdef H5
+  const target = actionControl(event)
+  activateActionKey(event, () => {
+    if (!(target instanceof HTMLElement) || target.getAttribute('aria-disabled') === 'true' ||
+        target.hasAttribute('disabled')) return
+    target.click()
+  })
+  // #endif
+}

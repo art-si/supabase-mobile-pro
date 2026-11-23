@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import MobileAction from './MobileAction.vue'
+import { preventActionKey, activateButtonKey } from '../action-keyboard'
 import MobileInlineLabel from './MobileInlineLabel.vue'
 
 defineOptions({ options: { styleIsolation: 'apply-shared' } })
@@ -13,9 +13,9 @@ defineEmits<{ action: [] }>()
       <text class="mobile-section-heading__title" role="heading" aria-level="2">{{ title }}</text>
       <text v-if="description" class="mobile-section-heading__description">{{ description }}</text>
     </view>
-    <MobileAction v-if="actionLabel" variant="link" @click="$emit('action')">
+    <button class="mobile-action mobile-action--link" v-if="actionLabel" @click="$emit('action')" role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">
       <MobileInlineLabel :label="actionLabel" icon="arrow-right" icon-position="end" />
-    </MobileAction>
+    </button>
   </view>
 </template>
 

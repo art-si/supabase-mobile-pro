@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { preventActionKey, activateButtonKey } from '../action-keyboard'
 import { computed, getCurrentInstance, ref, watch } from 'vue'
 import { onHide } from '@dcloudio/uni-app'
-import MobileAction from './MobileAction.vue'
 import MobileIcon from './MobileIcon.vue'
 import MobilePickerTrigger from './MobilePickerTrigger.vue'
 import MobileBottomSheet from './MobileBottomSheet.vue'
@@ -82,22 +82,22 @@ async function locateCurrent() {
     <MobileBottomSheet v-model="opened" :title="label" :close-label="districtMode ? '关闭地区选择' : '关闭城市选择'" :trigger-id="triggerId" :dialog-id="`${triggerId}-dialog`" :keyboard-height="keyboardHeight" :body-height="380" root-portal :z-index="180">
       <template #toolbar><MobileSearch v-model="query" :name="`${triggerId}-search`" :label="districtMode ? '搜索地区' : '搜索城市'" :placeholder="districtMode ? '搜索省、市或区县' : '搜索城市或省份'" live :debounce="0" fit-keyboard @search="keyword = $event" @keyboard="keyboardHeight = $event" /></template>
       <view class="mobile-city-picker__body">
-        <MobileAction v-if="props.locate" class="mobile-city-picker__locate" :disabled="locating" :aria-label="locating ? (districtMode ? '正在定位地区…' : '正在定位城市…') : locateLabel || (districtMode ? '定位当前地区' : '定位当前城市')" @click="locateCurrent"><MobileIcon name="locate" size="20px" /><view class="mobile-city-picker__name"><text>{{ locating ? (districtMode ? '正在定位地区…' : '正在定位城市…') : locateLabel || (districtMode ? '定位当前地区' : '定位当前城市') }}</text><text v-if="locatedLabel" class="mobile-city-picker__caption">{{ locatedLabel }}</text></view></MobileAction>
+        <button v-if="props.locate" class="mobile-action mobile-city-picker__locate" :disabled="locating" :aria-label="locating ? (districtMode ? '正在定位地区…' : '正在定位城市…') : locateLabel || (districtMode ? '定位当前地区' : '定位当前城市')" @click="locateCurrent" role="button" :tabindex="(locating) ? -1 : 0" :aria-disabled="(locating) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey"><MobileIcon name="locate" size="20px" /><view class="mobile-city-picker__name"><text>{{ locating ? (districtMode ? '正在定位地区…' : '正在定位城市…') : locateLabel || (districtMode ? '定位当前地区' : '定位当前城市') }}</text><text v-if="locatedLabel" class="mobile-city-picker__caption">{{ locatedLabel }}</text></view></button>
         <text v-if="locationError" class="mobile-city-picker__message" role="alert">{{ locationError }}</text>
         <template v-if="!keyword.trim() && !provinceId">
-          <view v-if="selected" class="mobile-city-picker__current"><text class="mobile-city-picker__caption">当前选择</text><MobileAction class="mobile-city-picker__city is-selected" :aria-label="`选择${selected.name}`" @click="choose(model)"><text>{{ districtMode ? currentLabel || selected.name : selected.name }}</text><MobileIcon name="check" size="20px" /></MobileAction></view>
+          <view v-if="selected" class="mobile-city-picker__current"><text class="mobile-city-picker__caption">当前选择</text><button class="mobile-action mobile-city-picker__city is-selected" :aria-label="`选择${selected.name}`" @click="choose(model)" role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey"><text>{{ districtMode ? currentLabel || selected.name : selected.name }}</text><MobileIcon name="check" size="20px" /></button></view>
           <text class="mobile-city-picker__caption">按省份选择</text>
-          <view class="mobile-city-picker__provinces"><MobileAction v-for="item in provinces" :key="item.id" class="mobile-city-picker__province" @click="browse(item.id)">{{ item.name }}</MobileAction></view>
+          <view class="mobile-city-picker__provinces"><button v-for="item in provinces" :key="item.id" class="mobile-action mobile-city-picker__province" @click="browse(item.id)" role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">{{ item.name }}</button></view>
         </template>
         <template v-else>
-          <MobileAction v-if="!keyword.trim()" class="mobile-city-picker__back" @click="back"><MobileIcon name="back" size="18px" /><text>{{ city?.name || province?.name }} · {{ cityId ? '返回城市' : '返回省份' }}</text></MobileAction>
-          <MobileAction v-if="districtMode && !keyword.trim() && (cityId || allowPartial && provinceId)" class="mobile-city-picker__city" @click="choose(cityId || `province-${provinceId}`)">只选择{{ city?.name || province?.name }}</MobileAction>
-          <MobileAction v-for="item in choices" :key="item.id" class="mobile-city-picker__city" :class="{ 'is-selected': item.id === model }" :aria-label="`选择${item.name}`" :aria-pressed="item.id === model" @click="chooseOption(item)"><view class="mobile-city-picker__name"><text>{{ item.name }}</text><text v-if="keyword.trim()" class="mobile-city-picker__caption">{{ item.province }}{{ 'city' in item ? ' · '+item.city : '' }}</text></view><MobileIcon v-if="item.id === model" name="check" size="20px" /></MobileAction>
+          <button v-if="!keyword.trim()" class="mobile-action mobile-city-picker__back" @click="back" role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey"><MobileIcon name="back" size="18px" /><text>{{ city?.name || province?.name }} · {{ cityId ? '返回城市' : '返回省份' }}</text></button>
+          <button v-if="districtMode && !keyword.trim() && (cityId || allowPartial && provinceId)" class="mobile-action mobile-city-picker__city" @click="choose(cityId || `province-${provinceId}`)" role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">只选择{{ city?.name || province?.name }}</button>
+          <button v-for="item in choices" :key="item.id" class="mobile-action mobile-city-picker__city" :class="{ 'is-selected': item.id === model }" :aria-label="`选择${item.name}`" :aria-pressed="item.id === model" @click="chooseOption(item)" role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey"><view class="mobile-city-picker__name"><text>{{ item.name }}</text><text v-if="keyword.trim()" class="mobile-city-picker__caption">{{ item.province }}{{ 'city' in item ? ' · '+item.city : '' }}</text></view><MobileIcon v-if="item.id === model" name="check" size="20px" /></button>
           <text v-if="!choices.length" class="mobile-city-picker__message" role="status">没有找到匹配地区，请换个名称。</text>
           <text v-if="matches.length > choices.length" class="mobile-city-picker__message" role="status">匹配城市较多，请补充城市名称。</text>
         </template>
       </view>
-      <template v-if="clearable && (model || currentLabel)" #footer><MobileAction class="mobile-city-picker__clear" @click="choose('')">清空城市</MobileAction></template>
+      <template v-if="clearable && (model || currentLabel)" #footer><button class="mobile-action mobile-city-picker__clear" @click="choose('')" role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">清空城市</button></template>
     </MobileBottomSheet>
   </view>
 </template>

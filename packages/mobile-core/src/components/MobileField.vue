@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { preventActionKey, activateButtonKey } from '../action-keyboard'
 import { computed, provide, useSlots, ref, watch } from "vue";
-import MobileAction from "./MobileAction.vue";
 defineOptions({ options: { styleIsolation: "apply-shared" } });
 import { mobileFieldContext } from "../field-context";
 import { nativeFieldOf, useNativeFieldAttributes } from "../form-focus";
@@ -21,11 +21,13 @@ const props = withDefaults(
     password?: boolean;
     allowPasswordReveal?: boolean;
     multiline?: boolean;
+    plain?: boolean;
+    adjustPosition?: boolean;
     readonly?: boolean;
     inputmode?: "text" | "numeric" | "decimal" | "tel" | "email";
     autocomplete?: string;
   }>(),
-  { maxlength: 120, inputmode: "text", autocomplete: "off" },
+  { maxlength: 120, inputmode: "text", autocomplete: "off", adjustPosition: true },
 );
 
 const model = defineModel<string>({ default: "" });
@@ -36,7 +38,11 @@ watch(
     passwordVisible.value = false;
   },
 );
-defineEmits<{ confirm: [] }>();
+const emit = defineEmits<{ confirm: []; keyboard: [height: number] }>();
+function reportKeyboard(event: { detail?: { height?: number } }) {
+  const height = event.detail?.height;
+  if (typeof height === 'number' && Number.isFinite(height)) emit('keyboard', Math.max(0, height));
+}
 const slots = useSlots();
 const labelParts = computed(() => {
   const chars = [...props.label];
@@ -111,7 +117,7 @@ const type = computed(() => {
 </script>
 
 <template>
-  <view class="mobile-field">
+  <view class="mobile-field" :class="{ 'mobile-field--plain': plain }">
     <label class="mobile-field__label" :for="labelFor" @click="focusField">
       <template v-if="required"
         >{{ labelParts.prefix
@@ -153,6 +159,8 @@ const type = computed(() => {
         :maxlength="maxlength"
         :disabled="disabled"
         :focus="focus"
+        :adjust-position="adjustPosition"
+        @keyboardheightchange="reportKeyboard"
       />
       <view
         v-else
@@ -189,25 +197,27 @@ const type = computed(() => {
           :maxlength="maxlength"
           :disabled="disabled"
           :focus="focus"
+          :adjust-position="adjustPosition"
+          @keyboardheightchange="reportKeyboard"
           @confirm="$emit('confirm')"
         />
         <view v-if="slots.suffix && !password" class="mobile-field__suffix"
           ><slot name="suffix"
         /></view>
-        <MobileAction
+        <button
           v-if="password && allowPasswordReveal"
-          class="mobile-field__reveal"
+          class="mobile-action mobile-field__reveal"
           :disabled="disabled"
           :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
           :aria-pressed="passwordVisible"
           @click="passwordVisible = !passwordVisible"
-        >
+         role="button" :tabindex="(disabled) ? -1 : 0" :aria-disabled="(disabled) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">
           <wd-icon
             :name="passwordVisible ? 'eye' : 'eye-invisible'"
             size="22px"
             aria-hidden="true"
           />
-        </MobileAction>
+        </button>
       </view>
     </slot>
     <text
@@ -356,6 +366,23 @@ const type = computed(() => {
 }
 .mobile-field__control:focus-within {
   @include form.focus;
+}
+// Composite editors own their surface and focus ring. Keep this styling in the
+// field itself so WeChat component isolation cannot bring back a second frame.
+.mobile-field--plain { gap: 6px; }
+.mobile-field--plain .mobile-field__control,
+.mobile-field--plain .mobile-field__control:focus-within {
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 4px 0;
+}
+.mobile-field--plain .mobile-field__control--textarea {
+  min-height: var(--mobile-field-textarea-height, 84px);
+  height: var(--mobile-field-textarea-height, 84px);
+  padding-block: 0;
 }
 .mobile-field__control--disabled {
   opacity: 0.6;

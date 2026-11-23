@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { preventActionKey, activateButtonKey } from '../action-keyboard'
 import { computed, onBeforeUnmount, ref, watch } from "vue";
-import MobileAction from "./MobileAction.vue";
 import MobileEvidence from "./MobileEvidence.vue";
 import MobileBottomSheet from "./MobileBottomSheet.vue";
 import MobileIcon from "./MobileIcon.vue";
@@ -416,21 +416,17 @@ defineExpose({ uploading, choosing, choose: add });
       </template>
       <template #status="{ index }">
         <template v-for="item in visibleItem(index)" :key="item.key">
-          <MobileAction
+          <button
             v-if="item.needsLogin"
-            variant="link"
-            class="mobile-media-uploader__retry"
+            class="mobile-action mobile-action--link mobile-media-uploader__retry"
             aria-label="登录后继续上传"
             @click="retry(index)"
-            >去登录</MobileAction
-          >
-          <MobileAction
+             role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">去登录</button>
+          <button
             v-else-if="item.error && item.retryable !== false"
-            variant="link"
-            class="mobile-media-uploader__retry"
+            class="mobile-action mobile-action--link mobile-media-uploader__retry"
             @click="retry(index)"
-            >重试上传</MobileAction
-          >
+             role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">重试上传</button>
           <text v-else-if="item.error" class="mobile-media-uploader__state"
             >请移除重选</text
           >

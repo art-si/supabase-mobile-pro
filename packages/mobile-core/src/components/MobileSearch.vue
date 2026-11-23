@@ -7,9 +7,8 @@ import {
   watch,
   watchPostEffect,
 } from "vue";
-import { activateActionKey, preventActionKey } from "../action-keyboard";
+import { activateActionKey, preventActionKey, activateButtonKey } from "../action-keyboard"
 import { nativeFieldOf, useNativeFieldAttributes } from "../form-focus";
-import MobileAction from "./MobileAction.vue";
 import MobileIcon from "./MobileIcon.vue";
 import type { MobileIconName } from "../icons";
 
@@ -289,16 +288,15 @@ function reportKeyboard(event?: FocusEvent | { detail: { height?: number } }) {
           @blur="reportKeyboard()"
           @keyboardheightchange="reportKeyboard"
         />
-        <MobileAction
+        <button
           v-if="text"
-          variant="icon"
-          class="mobile-search__clear"
+          class="mobile-action mobile-action--icon mobile-search__clear"
           aria-label="清除搜索"
           :disabled="disabled"
           @click="clear"
-        >
+         role="button" :tabindex="(disabled) ? -1 : 0" :aria-disabled="(disabled) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">
           <MobileIcon name="close" size="30rpx" aria-hidden="true" />
-        </MobileAction>
+        </button>
       </view>
       <button
         v-if="visibleAction"

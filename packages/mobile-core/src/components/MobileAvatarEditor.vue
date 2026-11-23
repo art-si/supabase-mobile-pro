@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { preventActionKey, activateButtonKey } from '../action-keyboard'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import MobileAvatar from './MobileAvatar.vue'
-import MobileAction from './MobileAction.vue'
 import MobileIcon from './MobileIcon.vue'
 // #ifdef H5
 import MobileAvatarCropper from './MobileAvatarCropper.vue'
@@ -80,12 +80,12 @@ onBeforeUnmount(()=>{disposed=true;queue.clear();releaseRaw?.()})
 </script>
 <template>
   <view class="mobile-avatar-editor">
-    <MobileAction class="mobile-avatar-editor__row" aria-label="更换头像" :disabled="disabled||busy" :aria-busy="busy" @click="choose">
+    <button class="mobile-action mobile-avatar-editor__row" aria-label="更换头像" :disabled="disabled||busy" :aria-busy="busy" @click="choose" role="button" :tabindex="(disabled||busy) ? -1 : 0" :aria-disabled="(disabled||busy) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">
       <MobileAvatar :src="local||model?.url" :name="name" :size="72"><slot /></MobileAvatar>
       <view class="mobile-avatar-editor__copy"><text class="mobile-avatar-editor__title">头像</text><text class="mobile-avatar-editor__hint" role="status">{{uploading?(progress!=null&&progress<100?`正在上传 ${Math.floor(progress)}%`:'正在处理头像…'):selecting?'正在选择…':'点击更换头像'}}</text></view>
       <MobileIcon name="camera" :size="22" />
-    </MobileAction>
-    <view class="mobile-avatar-editor__actions"><MobileAction v-if="model" variant="link" :disabled="disabled||busy" @click="reset">恢复默认头像</MobileAction><MobileAction v-if="error&&pending" variant="link" @click="retry">{{needsLogin?'登录后继续':'重试上传'}}</MobileAction></view>
+    </button>
+    <view class="mobile-avatar-editor__actions"><button class="mobile-action mobile-action--link" v-if="model" :disabled="disabled||busy" @click="reset" role="button" :tabindex="(disabled||busy) ? -1 : 0" :aria-disabled="(disabled||busy) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">恢复默认头像</button><button class="mobile-action mobile-action--link" v-if="error&&pending" @click="retry" role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">{{needsLogin?'登录后继续':'重试上传'}}</button></view>
     <text v-if="error" class="mobile-avatar-editor__error" role="alert">{{error}}</text>
     <view v-if="visible" ref="panel" class="mobile-avatar-editor__dialog" role="dialog" aria-modal="true" aria-label="调整头像" tabindex="-1">
       <!-- #ifdef H5 -->
@@ -94,7 +94,7 @@ onBeforeUnmount(()=>{disposed=true;queue.clear();releaseRaw?.()})
       <!-- #ifndef H5 -->
       <view class="mobile-avatar-editor__instructions"><text class="mobile-avatar-editor__dialog-title">调整头像</text><text>拖动或双指缩放，调整头像位置</text></view>
       <wd-img-cropper ref="cropper" v-model="visible" :img-src="raw" aspect-ratio="1:1" file-type="jpg" :quality=".88" :export-scale="2" disabled-rotate cancel-button-text="取消" confirm-button-text="使用头像" @confirm="cropped" @cancel="cancelCrop" @imgloaderror="cropError" />
-      <MobileAction class="mobile-avatar-editor__rotate" aria-label="旋转头像" @click="rotate"><MobileIcon name="refresh" :size="24" /></MobileAction>
+      <button class="mobile-action mobile-avatar-editor__rotate" aria-label="旋转头像" @click="rotate" role="button" tabindex="0" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey"><MobileIcon name="refresh" :size="24" /></button>
       <!-- #endif -->
     </view>
   </view>

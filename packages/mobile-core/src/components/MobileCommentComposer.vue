@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import MobileAction from './MobileAction.vue'
+import { preventActionKey, activateButtonKey } from '../action-keyboard'
 import MobileIcon from './MobileIcon.vue'
 
 defineOptions({ options: { styleIsolation: 'apply-shared' } })
@@ -26,13 +26,13 @@ const emit = defineEmits<{ emoji: []; camera: []; media: []; send: [] }>()
     <view v-if="$slots.attachments" class="mobile-comment-composer__attachments"><slot name="attachments" /></view>
     <view class="mobile-comment-composer__toolbar">
       <view class="mobile-comment-composer__tools">
-        <MobileAction :id="emojiTriggerId" class="mobile-comment-composer__tool" variant="icon" aria-label="表情" :aria-expanded="emojiOpen" :disabled="disabled" @click="emit('emoji')"><MobileIcon name="emoji" :size="24" /></MobileAction>
-        <MobileAction v-if="showCamera" class="mobile-comment-composer__tool" variant="icon" aria-label="拍照" :disabled="disabled || mediaDisabled" @click="emit('camera')"><MobileIcon name="camera" :size="24" /></MobileAction>
-        <MobileAction v-if="showAttachments" class="mobile-comment-composer__tool" variant="icon" :aria-label="attachmentLabel" :disabled="disabled || mediaDisabled" @click="emit('media')"><MobileIcon name="photo" :size="24" /></MobileAction>
+        <button :id="emojiTriggerId" class="mobile-action mobile-action--icon mobile-comment-composer__tool" aria-label="表情" :aria-expanded="emojiOpen" :disabled="disabled" @click="emit('emoji')" role="button" :tabindex="(disabled) ? -1 : 0" :aria-disabled="(disabled) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey"><MobileIcon name="emoji" :size="24" /></button>
+        <button v-if="showCamera" class="mobile-action mobile-action--icon mobile-comment-composer__tool" aria-label="拍照" :disabled="disabled || mediaDisabled" @click="emit('camera')" role="button" :tabindex="(disabled || mediaDisabled) ? -1 : 0" :aria-disabled="(disabled || mediaDisabled) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey"><MobileIcon name="camera" :size="24" /></button>
+        <button v-if="showAttachments" class="mobile-action mobile-action--icon mobile-comment-composer__tool" :aria-label="attachmentLabel" :disabled="disabled || mediaDisabled" @click="emit('media')" role="button" :tabindex="(disabled || mediaDisabled) ? -1 : 0" :aria-disabled="(disabled || mediaDisabled) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey"><MobileIcon name="photo" :size="24" /></button>
       </view>
-      <MobileAction class="mobile-comment-composer__send" :aria-label="sendLabel" :disabled="disabled || sendDisabled" @click="emit('send')">
+      <button class="mobile-action mobile-comment-composer__send" :aria-label="sendLabel" :disabled="disabled || sendDisabled" @click="emit('send')" role="button" :tabindex="(disabled || sendDisabled) ? -1 : 0" :aria-disabled="(disabled || sendDisabled) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">
         <text class="mobile-comment-composer__send-text">发送</text><MobileIcon class="mobile-comment-composer__send-icon" name="send" :size="22" />
-      </MobileAction>
+      </button>
     </view>
   </view>
   <view v-if="$slots.meta || busy" class="mobile-comment-composer__meta">
@@ -44,6 +44,7 @@ const emit = defineEmits<{ emoji: []; camera: []; media: []; send: [] }>()
 <style scoped lang="scss">
 .mobile-comment-composer-shell { min-width: 0; }
 .mobile-comment-composer {
+  --mobile-field-textarea-height: var(--mobile-comment-input-height, 84px);
   min-width: 0;
   padding: 12px 8px 8px;
   border: 1px solid var(--mobile-workspace-line, var(--tms-line-subtle));
