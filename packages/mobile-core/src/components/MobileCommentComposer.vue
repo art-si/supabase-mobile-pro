@@ -11,17 +11,20 @@ withDefaults(defineProps<{
   emojiOpen?: boolean
   showCamera?: boolean
   showAttachments?: boolean
+  /** Explicit state for conditional slots: WeChat retains their slot declarations. */
+  showReply?: boolean
+  showMeta?: boolean
   attachmentLabel?: string
   emojiTriggerId?: string
   sendLabel?: string
-}>(), { sendLabel: '发表评论', showAttachments: true, attachmentLabel: '添加图片 / 视频' })
+}>(), { sendLabel: '发表评论', showAttachments: true, showReply: undefined, showMeta: undefined, attachmentLabel: '添加图片 / 视频' })
 const emit = defineEmits<{ emoji: []; camera: []; media: []; send: [] }>()
 </script>
 
 <template>
   <view class="mobile-comment-composer-shell">
   <view class="mobile-comment-composer" :aria-busy="busy || undefined">
-    <view v-if="$slots.reply" class="mobile-comment-composer__reply"><slot name="reply" /></view>
+    <view v-if="showReply ?? !!$slots.reply" class="mobile-comment-composer__reply"><slot name="reply" /></view>
     <view class="mobile-comment-composer__input"><slot /></view>
     <view v-if="$slots.attachments" class="mobile-comment-composer__attachments"><slot name="attachments" /></view>
     <view class="mobile-comment-composer__toolbar">
@@ -36,7 +39,7 @@ const emit = defineEmits<{ emoji: []; camera: []; media: []; send: [] }>()
       </button>
     </view>
   </view>
-  <view v-if="$slots.meta && !busy" class="mobile-comment-composer__meta">
+  <view v-if="(showMeta ?? !!$slots.meta) && !busy" class="mobile-comment-composer__meta">
     <slot name="meta" />
   </view>
   <text v-if="busy" class="mobile-comment-composer__announcement" role="status">正在发送</text>

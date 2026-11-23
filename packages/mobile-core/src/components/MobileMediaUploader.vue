@@ -357,7 +357,8 @@ onBeforeUnmount(() => {
 defineExpose({ uploading, choosing, choose: add });
 </script>
 <template>
-  <view class="mobile-media-uploader" :class="{ 'mobile-media-uploader--compact': compact }">
+  <!-- Keep the picker ref mounted, without native placeholder nodes creating empty grid rows. -->
+  <view class="mobile-media-uploader" :class="{ 'mobile-media-uploader--compact': compact, 'mobile-media-uploader--empty': !items.length && hideAddButton && !selectionNotice }">
     <MobileEvidence
       :images="items.map(previewPath)"
       :media-kinds="items.map(kind)"
@@ -459,6 +460,8 @@ defineExpose({ uploading, choosing, choose: add });
   gap: 12px;
   min-width: 0;
 }
+/* A native hidden attribute can be overridden by the grid display rule. */
+.mobile-media-uploader--empty { display: none; }
 .mobile-media-uploader__preview {
   position: relative;
   width: 100%;
