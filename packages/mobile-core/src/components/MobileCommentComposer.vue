@@ -30,14 +30,16 @@ const emit = defineEmits<{ emoji: []; camera: []; media: []; send: [] }>()
         <button v-if="showCamera" class="mobile-action mobile-action--icon mobile-comment-composer__tool" aria-label="拍照" :disabled="disabled || mediaDisabled" @click="emit('camera')" role="button" :tabindex="(disabled || mediaDisabled) ? -1 : 0" :aria-disabled="(disabled || mediaDisabled) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey"><MobileIcon name="camera" :size="24" /></button>
         <button v-if="showAttachments" class="mobile-action mobile-action--icon mobile-comment-composer__tool" :aria-label="attachmentLabel" :disabled="disabled || mediaDisabled" @click="emit('media')" role="button" :tabindex="(disabled || mediaDisabled) ? -1 : 0" :aria-disabled="(disabled || mediaDisabled) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey"><MobileIcon name="photo" :size="24" /></button>
       </view>
-      <button class="mobile-action mobile-comment-composer__send" :aria-label="sendLabel" :disabled="disabled || sendDisabled" @click="emit('send')" role="button" :tabindex="(disabled || sendDisabled) ? -1 : 0" :aria-disabled="(disabled || sendDisabled) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">
-        <text class="mobile-comment-composer__send-text">发送</text><view class="mobile-comment-composer__send-icon"><MobileIcon name="send" :size="22" /></view>
+      <button class="mobile-action mobile-comment-composer__send" :aria-label="busy ? '正在发送' : sendLabel" :aria-busy="busy || undefined" :disabled="disabled || sendDisabled || busy" @click="!busy && emit('send')" role="button" :tabindex="(disabled || sendDisabled || busy) ? -1 : 0" :aria-disabled="(disabled || sendDisabled || busy) || undefined" hover-class="mobile-action--pressed" @keydown="preventActionKey" @keyup="activateButtonKey">
+        <view v-if="busy" class="mobile-comment-composer__spinner" aria-hidden="true" />
+        <template v-else><text class="mobile-comment-composer__send-text">发送</text><view class="mobile-comment-composer__send-icon"><MobileIcon name="send" :size="22" /></view></template>
       </button>
     </view>
   </view>
-  <view v-if="$slots.meta || busy" class="mobile-comment-composer__meta">
-    <text v-if="busy" role="status">正在发送…</text><slot v-else name="meta" />
+  <view v-if="$slots.meta && !busy" class="mobile-comment-composer__meta">
+    <slot name="meta" />
   </view>
+  <text v-if="busy" class="mobile-comment-composer__announcement" role="status">正在发送</text>
   </view>
 </template>
 
@@ -136,6 +138,31 @@ const emit = defineEmits<{ emoji: []; camera: []; media: []; send: [] }>()
   white-space: nowrap;
 }
 .mobile-comment-composer__send-icon { display: none !important; }
+.mobile-comment-composer__spinner {
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: mobile-comment-send-spin .8s linear infinite;
+}
+.mobile-comment-composer__announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@keyframes mobile-comment-send-spin { to { transform: rotate(360deg); } }
+/* #ifdef H5 */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-comment-composer__spinner { animation: none !important; }
+}
+/* #endif */
 @media (max-width: 22rem) {
   .mobile-comment-composer__send.mobile-action { min-width: 48px; width: 48px; padding: 0; }
   .mobile-comment-composer__send-text { display: none; }

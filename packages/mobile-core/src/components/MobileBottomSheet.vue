@@ -28,8 +28,11 @@ const props = withDefaults(defineProps<{
   zIndex?: number
   bodyHeight?: number
   keyboardHeight?: number
+  refreshable?: boolean
+  refreshing?: boolean
+  refreshStyle?: 'black' | 'white'
 }>(), { zIndex: 40 })
-const emit = defineEmits<{ 'after-enter': []; 'after-leave': [] }>()
+const emit = defineEmits<{ 'after-enter': []; 'after-leave': []; refresh: [] }>()
 const panel = ref<HTMLElement | { $el?: unknown }>()
 const systemInsets = inject(systemInsetsKey, useSystemInsets, true)
 const parentSheet = inject(sheetVisibilityKey, undefined)
@@ -103,7 +106,10 @@ function close() {
         ><MobileIcon name="close" size="20px" aria-hidden="true" /></button>
       </view>
       <view v-if="$slots.toolbar" class="mobile-sheet__toolbar"><slot name="toolbar" /></view>
-      <scroll-view class="mobile-sheet__body" :style="bodyStyle" scroll-y enhanced :show-scrollbar="false"><slot /></scroll-view>
+      <scroll-view class="mobile-sheet__body" :style="bodyStyle" scroll-y enhanced :show-scrollbar="false"
+        :refresher-enabled="refreshable && !busy" :refresher-triggered="refreshing"
+        :refresher-default-style="refreshStyle || 'black'" refresher-background="transparent"
+        @refresherrefresh="emit('refresh')"><slot /></scroll-view>
       <view v-if="$slots.footer" class="mobile-sheet__footer"><slot name="footer" /></view>
       <slot name="overlay" />
     </view>
