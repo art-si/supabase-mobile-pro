@@ -96,6 +96,7 @@ const emit = defineEmits<{ emoji: []; camera: []; media: []; send: [] }>()
   padding-block: 0;
 }
 .mobile-comment-composer__attachments:empty { display: none; }
+.mobile-comment-composer__attachments { display: block; max-height: none; overflow: visible; }
 .mobile-comment-composer__meta {
   display: flex;
   flex-wrap: wrap;
@@ -107,7 +108,7 @@ const emit = defineEmits<{ emoji: []; camera: []; media: []; send: [] }>()
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
 }
-.mobile-comment-composer__toolbar { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.mobile-comment-composer__toolbar { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 4px; }
 .mobile-comment-composer__tools { display: flex; flex: 0 0 auto; align-items: center; }
 .mobile-comment-composer__tool.mobile-action {
   display: flex;

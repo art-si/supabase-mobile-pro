@@ -471,6 +471,7 @@ defineExpose({ uploading, choosing, choose: add });
 }
 /* A native hidden attribute can be overridden by the grid display rule. */
 .mobile-media-uploader--empty { display: none; }
+.mobile-media-uploader--compact:not(.mobile-media-uploader--empty) { padding-block: 8px; }
 .mobile-media-uploader__preview {
   position: relative;
   width: 100%;

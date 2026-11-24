@@ -4,6 +4,7 @@ import { activateActionKey, preventActionKey } from "../action-keyboard";
 import { elementOf, type ElementTarget } from "../form-focus";
 import MobileIcon from "./MobileIcon.vue";
 import MobileInlineLabel from "./MobileInlineLabel.vue";
+import MobileMediaTray from "./MobileMediaTray.vue";
 import MobileImagePreview from "./MobileImagePreview.vue";
 import { useMediaReorder } from "../media-reorder";
 
@@ -58,6 +59,9 @@ interface Thumbnail {
 }
 
 const thumbnails = ref<Thumbnail[]>([]);
+const trayStyle = computed(() => props.compact && props.overlayRemove
+  ? { width: `${thumbnails.value.length * 112 + Math.max(0, thumbnails.value.length - 1) * 12}px` }
+  : undefined);
 
 function createThumbnail(url: string, index: number): Thumbnail {
   const item = reactive<Thumbnail>({
@@ -145,7 +149,8 @@ defineExpose({ preview });
     class="mobile-evidence"
     :class="{ 'mobile-evidence--overlay-remove': overlayRemove, 'mobile-evidence--reorderable': reorderable && !disabled, 'mobile-evidence--compact': compact }"
   >
-    <view v-if="thumbnails.length" class="mobile-evidence__grid">
+    <MobileMediaTray v-if="thumbnails.length" :horizontal="compact && overlayRemove" :scrolling="!reorder.dragging.value">
+    <view class="mobile-evidence__grid" :style="trayStyle">
       <view
         v-for="(thumbnail, index) in thumbnails"
         :key="thumbnail.key"
@@ -199,7 +204,7 @@ defineExpose({ preview });
           </slot>
         </button>
         <button
-          v-if="thumbnail.failed"
+          v-if="thumbnail.failed && !customPreview"
           class="mobile-action mobile-evidence__original"
           role="button"
           tabindex="0"
@@ -242,6 +247,7 @@ defineExpose({ preview });
         </button>
       </view>
     </view>
+    </MobileMediaTray>
     <button
       v-if="!readonly && !hideAddButton && images.length < props.limit"
       class="mobile-action mobile-evidence__add evidence-grid__add"
@@ -270,7 +276,7 @@ defineExpose({ preview });
 .mobile-evidence {
   display: grid;
   min-width: 0;
-  gap: 8px;
+  gap: 12px;
 }
 .mobile-evidence__grid {
   display: grid;
@@ -297,19 +303,29 @@ defineExpose({ preview });
   pointer-events: auto;
 }
 .mobile-evidence--overlay-remove .mobile-evidence__grid {
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, max(104px, 6.5rem)), 1fr));
-  align-items: stretch;
-  gap: 20px 8px;
-  padding-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
 }
 .mobile-evidence--overlay-remove .mobile-evidence__item {
   position: relative;
-  align-self: stretch;
+  display: block;
+  box-sizing: border-box;
+  flex: 0 0 112px;
+  width: 112px;
+  height: 112px;
+}
+.mobile-evidence--overlay-remove .mobile-action.mobile-evidence__preview {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  aspect-ratio: auto;
 }
 .mobile-evidence--overlay-remove .mobile-action.mobile-evidence__remove {
   position: absolute;
-  right: -6px;
-  top: -18px;
+  right: 0;
+  top: 0;
   z-index: 3;
   width: 48px;
   height: 48px;
@@ -322,11 +338,13 @@ defineExpose({ preview });
   align-items: center;
   justify-content: center;
 }
-.mobile-evidence--compact .mobile-evidence__grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.mobile-evidence--compact.mobile-evidence--overlay-remove .mobile-evidence__grid {
+  flex-wrap: nowrap;
+  min-width: 100%;
 }
-/* Every uploader uses the same corner mark; the 48px target stays above the
-   centre preview/play target, including three-column compact thumbnails. */
+.mobile-evidence--overlay-remove .mobile-action:focus-visible { outline-offset: -2px; }
+/* The complete 48px target stays inside its own 112px tile. It cannot cover
+   the preview centre, adjacent attachments, a field label or the next row. */
 .mobile-evidence__remove-mark {
   display: grid;
   place-items: center;
