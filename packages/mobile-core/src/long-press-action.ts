@@ -12,12 +12,40 @@ export function useLongPressAction(
 ) {
   const inherited = useLongPressActionGuard()
   let held = false, blockedUntil = 0
+  let stopReleaseClick = () => {}
+  function captureReleaseClick() {
+    // #ifdef H5
+    if (typeof document === 'undefined') return
+    stopReleaseClick()
+    const click = (event: Event) => {
+      if (!allowClick()) { event.preventDefault(); event.stopImmediatePropagation() }
+      stopReleaseClick()
+    }
+    const fresh = () => {
+      if (held) return
+      reset()
+      stopReleaseClick()
+    }
+    // Opening a modal retargets a compatibility click to its mask/button, outside the card.
+    document.addEventListener('click', click, true)
+    document.addEventListener('pointerdown', fresh, true)
+    document.addEventListener('touchstart', fresh, true)
+    document.addEventListener('keydown', fresh, true)
+    stopReleaseClick = () => {
+      document.removeEventListener('click', click, true)
+      document.removeEventListener('pointerdown', fresh, true)
+      document.removeEventListener('touchstart', fresh, true)
+      document.removeEventListener('keydown', fresh, true)
+    }
+    // #endif
+  }
   function hold(event?: { target?: unknown }) {
     // #ifdef H5
     if ((event?.target as Element | undefined)?.closest?.('[role="dialog"], [data-longpress-ignore]')) return
     // #endif
     if (!enabled() || !inherited()) return
     held = true
+    captureReleaseClick()
     action()
   }
   function release() {
@@ -55,6 +83,6 @@ export function useLongPressAction(
     }
   }, { immediate: true, flush: 'post' })
   // #endif
-  onScopeDispose(() => { detach(); reset() })
+  onScopeDispose(() => { detach(); stopReleaseClick(); reset() })
   return { hold, release, allowClick, reset }
 }
