@@ -10,6 +10,7 @@ import {
 import { activateActionKey, preventActionKey, activateButtonKey } from "../action-keyboard"
 import { nativeFieldOf, useNativeFieldAttributes } from "../form-focus";
 import MobileIcon from "./MobileIcon.vue";
+import MobileLoadingStatus from "./MobileLoadingStatus.vue";
 import type { MobileIconName } from "../icons";
 
 defineOptions({ options: { styleIsolation: "shared" } });
@@ -23,6 +24,8 @@ const props = withDefaults(
     maxlength?: number;
     actionLabel?: string;
     disabled?: boolean;
+    loading?: boolean;
+    loadingLabel?: string;
     compactAction?: boolean;
     fitKeyboard?: boolean;
     live?: boolean;
@@ -33,7 +36,7 @@ const props = withDefaults(
     suggestionIcon?: MobileIconName;
     floatingSuggestions?: boolean;
   }>(),
-  { maxlength: 64 },
+  { maxlength: 64, loadingLabel: "正在加载" },
 );
 const emit = defineEmits<{
   "update:modelValue": [value: string];
@@ -288,6 +291,9 @@ function reportKeyboard(event?: FocusEvent | { detail: { height?: number } }) {
           @blur="reportKeyboard()"
           @keyboardheightchange="reportKeyboard"
         />
+        <view v-if="loading" class="mobile-search__loading" role="status" :aria-label="loadingLabel">
+          <MobileLoadingStatus label="" />
+        </view>
         <button
           v-if="text"
           class="mobile-action mobile-action--icon mobile-search__clear"
@@ -557,8 +563,25 @@ function reportKeyboard(event?: FocusEvent | { detail: { height?: number } }) {
 }
 
 .mobile-search .mobile-search__clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  padding: 0;
+  margin: 0;
   min-height: var(--mobile-search-height);
   color: var(--mobile-search-muted);
+}
+.mobile-search__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 36px;
+  min-height: var(--mobile-search-height);
+  --mobile-loading-size: 18px;
+  --mobile-loading-gap: 0;
+  pointer-events: none;
 }
 .mobile-search .mobile-search__submit {
   padding-inline-end: 11px;
