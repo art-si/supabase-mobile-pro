@@ -28,6 +28,10 @@ jobs:
   existing-fishing-consumer:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        pro: [candidate, current-pin]
     steps:
       - uses: actions/checkout@v6
         with:
@@ -41,11 +45,19 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-      - name: Install candidate package into Fishing
-        id: candidate
+      - uses: actions/checkout@v6
+        if: matrix.pro == 'current-pin'
+        with:
+          ref: 3b61ba1c4cfc07baf8f3ed88fc1e42f6ed2b42aa
+          path: .ci-pro-current
+          persist-credentials: false
+      - name: Install selected package into Fishing
+        id: package
         shell: bash
+        env:
+          PACK_ROOT: ${{ matrix.pro == 'current-pin' && '.ci-pro-current' || '.' }}
         run: |
-          archive="$(npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP" --json | node -p 'JSON.parse(require("node:fs").readFileSync(0))[0].filename')"
+          archive="$(cd "$PACK_ROOT" && npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP" --json | node -p 'JSON.parse(require("node:fs").readFileSync(0))[0].filename')"
           export MOBILE_PRO_CANDIDATE="$RUNNER_TEMP/$archive"
           cd .ci-fishing
           npm install -g "$(node -p 'require("./package.json").packageManager')"
@@ -62,10 +74,10 @@ jobs:
         working-directory: .ci-fishing
         run: pnpm typecheck && pnpm test
       - name: Build Fishing H5
-        if: ${{ !cancelled() && steps.candidate.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.package.outcome == 'success' }}
         working-directory: .ci-fishing
         run: pnpm build:h5
       - name: Build and audit Fishing WeChat package
-        if: ${{ !cancelled() && steps.candidate.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.package.outcome == 'success' }}
         working-directory: .ci-fishing
         run: pnpm build:mp-weixin
