@@ -24,3 +24,40 @@ jobs:
         run: npm install -g "$(node -p 'require("./package.json").packageManager')"
       - name: Build the independently installed starter
         run: pnpm test:starter
+
+  existing-fishing-consumer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          repository: art-si/supabase-mobile-fishing
+          ref: 3aa387b0c816c4c44ca733ceabe362101f86db0b
+          path: .ci-fishing
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Build Fishing against the candidate package
+        shell: bash
+        run: |
+          archive="$(npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP" --json | node -p 'JSON.parse(require("node:fs").readFileSync(0))[0].filename')"
+          export MOBILE_PRO_CANDIDATE="$RUNNER_TEMP/$archive"
+          cd .ci-fishing
+          npm install -g "$(node -p 'require("./package.json").packageManager')"
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs'
+          const app = JSON.parse(readFileSync('package.json', 'utf8'))
+          app.dependencies['supabase-mobile-pro'] = 'file:' + process.env.MOBILE_PRO_CANDIDATE
+          writeFileSync('package.json', JSON.stringify(app, null, 2) + '\n')
+          NODE
+          pnpm install --no-frozen-lockfile
+          pnpm install --frozen-lockfile
+          pnpm exec mobile-pro design
+          pnpm typecheck
+          pnpm test
+          pnpm build:h5
+          pnpm build:mp-weixin
