@@ -3,16 +3,15 @@ import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { installedMobileProRoot, loadMobilePro, resolveMobileProRoot } from './consumer.mjs'
+import { installedMobileProRoot, loadMobilePro } from './consumer.mjs'
 
 const applicationRoot = process.cwd()
 const [command, ...args] = process.argv.slice(2)
 
 if (command === 'design') {
-  const root = resolveMobileProRoot(applicationRoot)
-  const entry = resolve(root, 'scripts/mobile-design.mjs')
-  const { describeMobileDesign } = await import(pathToFileURL(entry).href)
-  console.log(describeMobileDesign(root))
+  // Resolve the design guide from the package that supplied this CLI, not a workspace runtime override.
+  const { describeMobileDesign } = await import('./mobile-design.mjs')
+  console.log(describeMobileDesign(resolve(import.meta.dirname, '..')))
 } else if (command === 'prepare' || command === 'typecheck') {
   const { prepareMobileCore } = await loadMobilePro(applicationRoot)
   prepareMobileCore(applicationRoot)

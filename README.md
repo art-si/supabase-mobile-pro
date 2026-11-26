@@ -65,7 +65,7 @@ pnpm build:android shipper
 ## 移动端底座与接入
 
 - 运行时：Pro 的 `packages/mobile-core/src` 是公共控件、行为和主题语义变量的唯一维护点。既有独立项目通过 pnpm 安装锁定提交的 `supabase-mobile-pro` 源码包，构建使用 `@mobile-core`；联调可以设置 `MOBILE_PRO_ROOT`。统一基础交互，不统一品牌、业务状态或权限。
-- 开发与设计：在独立项目运行 `pnpm exec mobile-pro design`，从已安装的 Pro 定位统一的设计规范和 Apple Design、UI UX Pro Max、Ponytail 的固定来源。不把开发 skills 带入 App 构建，不在业务仓维护第二套规范。现有版本未包含该命令时，联调可先从 Pro 源码阅读 [移动端共用设计规则](.agents/skills/mobile-platform/SKILL.md)。
+- 开发与设计：在独立项目运行 `pnpm exec mobile-pro design`，从已安装的 Pro 定位统一的设计规范和 Apple Design、UI UX Pro Max、Ponytail 的固定来源。该命令始终读取当前 CLI 所属版本，不受运行时的 `MOBILE_PRO_ROOT` 或外层 Pro 检出影响；若还未更新包，可用 `node <Pro 检出目录>/scripts/mobile-cli.mjs design` 验证新版规则。不把开发 skills 带入 App 构建，不在业务仓维护第二套规范。现有版本未包含该命令时，联调可先从 Pro 源码阅读 [移动端共用设计规则](.agents/skills/mobile-platform/SKILL.md)。
 - 更新顺序：先在 Pro 实现并验收，再发布当前使用的源码包，最后让业务仓更新依赖和锁文件并跑类型检查、单测、H5、小程序和受影响流程；不要为了更新依赖改动线上数据或重新发布既有静态页面。
 
 ## 公共样式
