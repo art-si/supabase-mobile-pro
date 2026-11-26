@@ -10,6 +10,9 @@
     "mobile-pro": "./scripts/mobile-cli.mjs"
   },
   "files": [
+    ".agents/skills/mobile-platform",
+    ".agents/references",
+    "scripts/mobile-design.mjs",
     "packages/mobile-core",
     "scripts/consumer.mjs",
     "scripts/mobile-cli.mjs",

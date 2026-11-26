@@ -3,12 +3,17 @@ import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { installedMobileProRoot, loadMobilePro } from './consumer.mjs'
+import { installedMobileProRoot, loadMobilePro, resolveMobileProRoot } from './consumer.mjs'
 
 const applicationRoot = process.cwd()
 const [command, ...args] = process.argv.slice(2)
 
-if (command === 'prepare' || command === 'typecheck') {
+if (command === 'design') {
+  const root = resolveMobileProRoot(applicationRoot)
+  const entry = resolve(root, 'scripts/mobile-design.mjs')
+  const { describeMobileDesign } = await import(pathToFileURL(entry).href)
+  console.log(describeMobileDesign(root))
+} else if (command === 'prepare' || command === 'typecheck') {
   const { prepareMobileCore } = await loadMobilePro(applicationRoot)
   prepareMobileCore(applicationRoot)
 }
@@ -20,9 +25,9 @@ const tools = {
   typecheck: ['vue-tsc', 'vue-tsc']
 }
 
-if (command !== 'prepare') {
+if (command !== 'prepare' && command !== 'design') {
   if (!Object.hasOwn(tools, command)) {
-    throw new Error('用法：mobile-pro <prepare|uni|vite|typecheck|cap> [参数]')
+    throw new Error('用法：mobile-pro <design|prepare|uni|vite|typecheck|cap> [参数]')
   }
   const [name, bin] = tools[command]
   const require = createRequire(resolve(installedMobileProRoot(applicationRoot), 'package.json'))

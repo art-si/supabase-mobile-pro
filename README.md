@@ -62,6 +62,12 @@ pnpm build:android shipper
 
 如需在 Android Studio 中调试，运行 `pnpm android:sync driver` 或 `pnpm android:sync shipper`，再打开相应子仓的 `dist/mobile-pro-android/android`。工程由主仓脚本生成，共用原生资源维护在 `scripts/android/`。
 
+## 移动端底座与接入
+
+- 运行时：Pro 的 `packages/mobile-core/src` 是公共控件、行为和主题语义变量的唯一维护点。既有独立项目通过 pnpm 安装锁定提交的 `supabase-mobile-pro` 源码包，构建使用 `@mobile-core`；联调可以设置 `MOBILE_PRO_ROOT`。统一基础交互，不统一品牌、业务状态或权限。
+- 开发与设计：在独立项目运行 `pnpm exec mobile-pro design`，从已安装的 Pro 定位统一的设计规范和 Apple Design、UI UX Pro Max、Ponytail 的固定来源。不把开发 skills 带入 App 构建，不在业务仓维护第二套规范。现有版本未包含该命令时，联调可先从 Pro 源码阅读 [移动端共用设计规则](.agents/skills/mobile-platform/SKILL.md)。
+- 更新顺序：先在 Pro 实现并验收，再发布当前使用的源码包，最后让业务仓更新依赖和锁文件并跑类型检查、单测、H5、小程序和受影响流程；不要为了更新依赖改动线上数据或重新发布既有静态页面。
+
 ## 公共样式
 
 在 `packages/mobile-core/src` 修改公共实现。三端从同一套 Sass 样式获取主题色、字体、卡片、按钮和表单控件样式。主题选择沿用各自的缓存键，图标字体沿用各自的图标集。业务页面的专有样式放在所在子仓。
@@ -73,13 +79,3 @@ pnpm build:android shipper
 危险操作使用 `MobileConfirmDialog`，设置卡片底部的退出入口使用 `.mobile-row--danger`，空列表和搜索无结果使用 `MobileEmptyState`。各端提供文案和操作回调；取消确认、焦点恢复、状态版式和样式由主仓维护。
 
 自定义弹层使用 `useOverlayFocus` 管理焦点范围和关闭后的归还；多字段表单可用 `revealControl` 定位首个需修正的字段。读取失败使用 `MobileLoadError` 说明问题并提供重试入口。
-
-开发、构建和类型检查会先把公共源码同步到各子仓的 `src/_mobile-core/`，再通过 `@mobile-core/` 引用。微信小程序编译器需要在应用自己的输入目录内解析组件，因此生成目录由脚本管理并受 Git 忽略。运行中的开发服务重新启动后会同步新的公共代码。
-
-单独检出的业务仓通过 `pnpm install` 下载锁定提交的 Gitee 主仓源码包。在主仓的 `modules/` 中开发时直接使用主仓源码，也可用 `MOBILE_PRO_ROOT` 指定联调目录。字体生成需要可编辑的主仓检出，使用和授权说明见 [TMS Sans SC](packages/mobile-core/assets/fonts/README.md)。
-
-Vue、Pinia、Wot UI、Uni-app 和构建检查工具的版本在主仓 `package.json` 中统一维护。业务仓的 `mobile-pro` 命令使用已锁定的源码包及其依赖。升级时先验证并发布主仓提交，再让所有业务仓锁定同一提交，刷新各自的 pnpm 锁文件。
-
-原生端共享的 Capacitor 平台、CLI 和插件版本也在主仓维护。各端通过 `includePlugins` 选择实际要同步到原生工程的插件。
-
-用 `pnpm modules:status` 查看主仓锁定的版本。
