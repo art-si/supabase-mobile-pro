@@ -1,0 +1,84 @@
+name: Mobile platform checks
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  standalone-starter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Check Pro tooling
+        run: node --test scripts/tests/*.test.mjs scripts/test-media-picker-session.mjs scripts/test-video-posters-mini.mjs
+      - name: Install pinned pnpm
+        run: npm install -g "$(node -p 'require("./package.json").packageManager')"
+      - name: Build the independently installed starter
+        run: pnpm test:starter
+
+  existing-fishing-consumer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        pro: [candidate, current-pin]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          repository: art-si/supabase-mobile-fishing
+          ref: 3aa387b0c816c4c44ca733ceabe362101f86db0b
+          path: .ci-fishing
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - uses: actions/checkout@v6
+        if: matrix.pro == 'current-pin'
+        with:
+          ref: 3b61ba1c4cfc07baf8f3ed88fc1e42f6ed2b42aa
+          path: .ci-pro-current
+          persist-credentials: false
+      - name: Install selected package into Fishing
+        id: package
+        shell: bash
+        env:
+          CHECK_DESIGN: ${{ matrix.pro == 'candidate' && 'yes' || 'no' }}
+          PACK_ROOT: ${{ matrix.pro == 'current-pin' && '.ci-pro-current' || '.' }}
+        run: |
+          archive="$(cd "$PACK_ROOT" && npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP" --json | node -p 'JSON.parse(require("node:fs").readFileSync(0))[0].filename')"
+          export MOBILE_PRO_CANDIDATE="$RUNNER_TEMP/$archive"
+          cd .ci-fishing
+          npm install -g "$(node -p 'require("./package.json").packageManager')"
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs'
+          const app = JSON.parse(readFileSync('package.json', 'utf8'))
+          app.dependencies['supabase-mobile-pro'] = 'file:' + process.env.MOBILE_PRO_CANDIDATE
+          writeFileSync('package.json', JSON.stringify(app, null, 2) + '\n')
+          NODE
+          pnpm install --no-frozen-lockfile
+          pnpm install --frozen-lockfile
+          if [ "$CHECK_DESIGN" = yes ]; then pnpm exec mobile-pro design; fi
+      - name: Check Fishing types and tests
+        working-directory: .ci-fishing
+        run: pnpm typecheck && pnpm test
+      - name: Build Fishing H5
+        if: ${{ !cancelled() && steps.package.outcome == 'success' }}
+        working-directory: .ci-fishing
+        run: pnpm build:h5
+      - name: Build and audit Fishing WeChat package
+        if: ${{ !cancelled() && steps.package.outcome == 'success' }}
+        working-directory: .ci-fishing
+        run: pnpm build:mp-weixin

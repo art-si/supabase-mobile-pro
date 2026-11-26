@@ -1,0 +1,12 @@
+{
+  "name": "移动端起步模板",
+  "versionName": "0.1.0",
+  "versionCode": "1",
+  "transformPx": false,
+  "h5": { "router": { "mode": "hash" } },
+  "mp-weixin": {
+    "usingComponents": true,
+    "mergeVirtualHostAttributes": true,
+    "setting": { "urlCheck": true }
+  }
+}

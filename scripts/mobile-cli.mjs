@@ -8,7 +8,18 @@ import { installedMobileProRoot, loadMobilePro } from './consumer.mjs'
 const applicationRoot = process.cwd()
 const [command, ...args] = process.argv.slice(2)
 
-if (command === 'prepare' || command === 'typecheck') {
+const platformRoot = resolve(import.meta.dirname, '..')
+if (command === 'design') {
+  const { describeMobileDesign } = await import('./mobile-design.mjs')
+  console.log(describeMobileDesign(platformRoot))
+} else if (command === 'init') {
+  const [target, option, source] = args
+  if (args.length !== 3 || option !== '--pro') {
+    throw new Error('用法：mobile-pro init <新目录> --pro <固定包地址或 file: 路径>')
+  }
+  const { scaffoldMobileApp } = await import('./mobile-scaffold.mjs')
+  console.log(scaffoldMobileApp(platformRoot, target, source))
+} else if (command === 'prepare' || command === 'typecheck') {
   const { prepareMobileCore } = await loadMobilePro(applicationRoot)
   prepareMobileCore(applicationRoot)
 }
@@ -20,9 +31,9 @@ const tools = {
   typecheck: ['vue-tsc', 'vue-tsc']
 }
 
-if (command !== 'prepare') {
+if (!['design', 'init', 'prepare'].includes(command)) {
   if (!Object.hasOwn(tools, command)) {
-    throw new Error('用法：mobile-pro <prepare|uni|vite|typecheck|cap> [参数]')
+    throw new Error('用法：mobile-pro <design|init|prepare|uni|vite|typecheck|cap> [参数]')
   }
   const [name, bin] = tools[command]
   const require = createRequire(resolve(installedMobileProRoot(applicationRoot), 'package.json'))
