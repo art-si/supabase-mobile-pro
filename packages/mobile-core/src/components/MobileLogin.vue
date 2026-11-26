@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import MobileAction from './MobileAction.vue'
+import MobileCheckbox from './MobileCheckbox.vue'
 import MobileIcon from './MobileIcon.vue'
 import { activateActionKey, preventActionKey } from '../action-keyboard'
 import { nativeFieldOf, useNativeFieldAttributes } from '../form-focus'
@@ -341,14 +342,16 @@ function forgotPassword() {
 
       <view class="login-form__options">
         <view class="login-form__remember">
-          <wd-checkbox
+          <MobileCheckbox
             v-model="remember"
-            type="square"
+            shape="square"
+            indicator-size="32rpx"
+            icon-size="22px"
             checked-color="var(--login-primary)"
             :disabled="loading"
           >
-            记住我
-          </wd-checkbox>
+            <text class="login-form__remember-label">记住我</text>
+          </MobileCheckbox>
         </view>
         <MobileAction variant="link" @click="forgotPassword">
           忘记密码？
@@ -742,6 +745,8 @@ function forgotPassword() {
 }
 
 .login-form__remember {
+  --mobile-checkbox-gap: 8px;
+  --mobile-checkbox-min-height: max(44px, 88rpx);
   min-height: 88rpx;
   display: flex;
   align-items: center;
@@ -755,7 +760,7 @@ function forgotPassword() {
   border-radius: 10rpx;
 }
 
-.login-form__remember :deep(.wd-checkbox__label) {
+.login-form__remember-label {
   color: var(--login-text-strong);
   font-size: max(23rpx, 12px);
 }

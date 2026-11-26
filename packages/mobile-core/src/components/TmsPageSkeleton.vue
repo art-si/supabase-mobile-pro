@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import MobileLoadError from './MobileLoadError.vue'
 import MobileLoadingStatus from './MobileLoadingStatus.vue'
+import MobileSkeleton from './MobileSkeleton.vue'
 
 defineOptions({ options: { styleIsolation: 'shared' } })
 
@@ -29,16 +30,11 @@ defineEmits<{
         <MobileLoadingStatus :label="label" />
       </view>
       <view class="page-skeleton__card" aria-hidden="true">
-        <view class="page-skeleton__row">
-          <view class="page-skeleton__circle" />
-          <view class="page-skeleton__lines">
-            <view class="page-skeleton__line page-skeleton__line--medium" />
-            <view class="page-skeleton__line page-skeleton__line--short" />
+        <MobileSkeleton label="" bare>
+          <view class="page-skeleton__tiles">
+            <view class="page-skeleton__tile" /><view class="page-skeleton__tile" />
           </view>
-        </view>
-        <view class="page-skeleton__tiles">
-          <view class="page-skeleton__tile" /><view class="page-skeleton__tile" />
-        </view>
+        </MobileSkeleton>
       </view>
       <view v-if="!compact" class="page-skeleton__card page-skeleton__card--form" aria-hidden="true">
         <view class="page-skeleton__line page-skeleton__line--short" />
@@ -66,6 +62,15 @@ defineEmits<{
 }
 
 .page-skeleton__card {
+  --mobile-skeleton-card-gap: 0px;
+  --mobile-skeleton-line-gap: 14rpx;
+  --mobile-skeleton-avatar-size: 66rpx;
+  --mobile-skeleton-header-gap: 18rpx;
+  --mobile-skeleton-header-margin: 0px;
+  --mobile-skeleton-line-height: 22rpx;
+  --mobile-skeleton-line-radius: 999rpx;
+  --mobile-skeleton-title-width: 58%;
+  --mobile-skeleton-short-width: 34%;
   padding: 28rpx;
   background: var(--mobile-workspace-surface, var(--tms-surface));
   border: 1px solid var(--mobile-workspace-line, var(--tms-line-subtle));
@@ -74,23 +79,6 @@ defineEmits<{
 
 .page-skeleton__card + .page-skeleton__card {
   margin-top: 20rpx;
-}
-
-.page-skeleton__row {
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-}
-
-.page-skeleton__circle {
-  width: 66rpx;
-  height: 66rpx;
-  border-radius: 50%;
-  background: var(--tms-surface-muted);
-}
-
-.page-skeleton__lines {
-  flex: 1;
 }
 
 .page-skeleton__line,

@@ -8,7 +8,11 @@ const props = withDefaults(defineProps<{
   variant?: 'plain' | 'link' | 'icon'
   ariaLabel?: string
   ariaPressed?: boolean
-}>(), { ariaPressed: undefined })
+  ariaExpanded?: boolean
+  ariaControls?: string
+  ariaBusy?: boolean
+  loading?: boolean
+}>(), { ariaPressed: undefined, ariaExpanded: undefined, ariaBusy: undefined })
 const emit = defineEmits<{ click: [] }>()
 
 function activate() {
@@ -26,6 +30,10 @@ function activate() {
     :aria-disabled="disabled || undefined"
     :aria-label="ariaLabel"
     :aria-pressed="ariaPressed"
+    :aria-expanded="ariaExpanded"
+    :aria-controls="ariaControls"
+    :aria-busy="ariaBusy"
+    :loading="loading"
     hover-class="mobile-action--pressed"
     @click="activate"
     @keydown="preventActionKey"
