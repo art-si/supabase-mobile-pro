@@ -7,8 +7,16 @@ const sourceDirectory = resolve(import.meta.dirname, '../packages/mobile-core/sr
 const fontLicense = resolve(sourceDirectory, '../assets/fonts/NotoSansSC-OFL.txt')
 const iconLicense = resolve(sourceDirectory, '../assets/fonts/BootstrapIcons-MIT.txt')
 const generatedMarker = '.mobile-pro-generated'
+const markerText = 'Generated from supabase-mobile-pro/packages/mobile-core/src.'
+
+function ensureLocalDirectory(path) {
+  mkdirSync(path, { recursive: true })
+  if (!lstatSync(path).isDirectory()) throw new Error(`不是应用内普通目录：${path}`)
+}
 
 function writeIfChanged(from, to) {
+  const stat = lstatSync(to, { throwIfNoEntry: false })
+  if (stat && (!stat.isFile() || stat.nlink > 1)) throw new Error(`不会覆盖非普通文件：${to}`)
   const contents = readFileSync(from)
   if (!existsSync(to) || !contents.equals(readFileSync(to))) writeFileSync(to, contents)
 }
@@ -44,20 +52,24 @@ export function prepareMobileCore(applicationRoot) {
     throw new Error(`${appSource} 必须是项目中的目录。`)
   }
   const directory = join(appSource, '_mobile-core')
-  mkdirSync(directory, { recursive: true })
-  if (!lstatSync(directory).isDirectory()) {
-    throw new Error(`${directory} 必须是项目中的目录。`)
-  }
+  ensureLocalDirectory(directory)
   const marker = join(directory, generatedMarker)
-  if (!existsSync(marker)) {
+  const mark = lstatSync(marker, { throwIfNoEntry: false })
+  if (mark) {
+    if (!mark.isFile() || readFileSync(marker, 'utf8').trim() !== markerText) {
+      throw new Error(`不能确认生成目录归属，不会覆盖：${directory}`)
+    }
+  } else {
     if (readdirSync(directory).length > 0) {
       throw new Error(`${directory} 已存在手动保存的文件。请先移走这些文件再构建。`)
     }
-    writeFileSync(marker, 'Generated from supabase-mobile-pro/packages/mobile-core/src.\n')
+    writeFileSync(marker, markerText + '\n', { flag: 'wx' })
   }
+  const staticRoot = join(appSource, 'static')
+  const staticFonts = join(staticRoot, 'fonts')
+  ensureLocalDirectory(staticRoot)
+  ensureLocalDirectory(staticFonts)
   syncDirectory(sourceDirectory, directory)
-  const staticFonts = join(appSource, 'static', 'fonts')
-  mkdirSync(staticFonts, { recursive: true })
   writeIfChanged(fontLicense, join(staticFonts, 'NotoSansSC-OFL.txt'))
   writeIfChanged(iconLicense, join(staticFonts, 'BootstrapIcons-MIT.txt'))
   return directory

@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { basename, dirname, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 export function installedMobileProRoot(applicationRoot) {
@@ -8,9 +8,13 @@ export function installedMobileProRoot(applicationRoot) {
 
 export function resolveMobileProRoot(applicationRoot) {
   const configured = process.env.MOBILE_PRO_ROOT
+  const parent = dirname(resolve(applicationRoot))
   const candidates = configured
     ? [resolve(applicationRoot, configured)]
-    : [resolve(applicationRoot, '../..'), installedMobileProRoot(applicationRoot)]
+    : [
+        ...(basename(parent) === 'modules' ? [dirname(parent)] : []),
+        installedMobileProRoot(applicationRoot)
+      ]
   const platform = candidates.find((directory) =>
     existsSync(resolve(directory, 'scripts/mobile-runtime.mjs'))
   )

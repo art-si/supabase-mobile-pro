@@ -1,0 +1,26 @@
+name: Mobile platform checks
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  standalone-starter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Check Pro tooling
+        run: node --test scripts/tests/*.test.mjs
+      - name: Install pinned pnpm
+        run: npm install -g "$(node -p 'require("./package.json").packageManager')"
+      - name: Build the independently installed starter
+        run: pnpm test:starter

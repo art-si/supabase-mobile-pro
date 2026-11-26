@@ -1,0 +1,17 @@
+{
+  "apple-design": {
+    "repo": "dickwu/apple-design-skill",
+    "ref": "91e15664896f6f27e75dcf1414d1226cb95fa167",
+    "entry": "SKILL.md"
+  },
+  "ui-ux-pro-max": {
+    "repo": "nextlevelbuilder/ui-ux-pro-max-skill",
+    "ref": "902bf616a0cc590d3f89f233f0c4e00072e549f0",
+    "entry": ".claude/skills/ui-ux-pro-max/SKILL.md"
+  },
+  "ponytail": {
+    "repo": "DietrichGebert/ponytail",
+    "ref": "08e952d7a8057a57ce561ff1330d093fd92eec67",
+    "entry": "skills/ponytail/SKILL.md"
+  }
+}

@@ -14,7 +14,13 @@
     "scripts/consumer.mjs",
     "scripts/mobile-cli.mjs",
     "scripts/mobile-runtime.mjs",
-    "scripts/native-plugins.mjs"
+    "scripts/native-plugins.mjs",
+    ".agents/skills/mobile-platform",
+    ".agents/references",
+    "docs/mobile-consumer.md",
+    "scripts/mobile-design.mjs",
+    "scripts/mobile-scaffold.mjs",
+    "templates/starter"
   ],
   "scripts": {
     "modules:init": "git submodule update --init --recursive",
@@ -33,7 +39,9 @@
     "android:sync": "node scripts/android.mjs sync",
     "build:android": "node scripts/android.mjs build",
     "font:css": "node scripts/build-ui-font-css.mjs",
-    "icons:build": "node scripts/build-mobile-icons.mjs"
+    "icons:build": "node scripts/build-mobile-icons.mjs",
+    "test:platform": "node --test scripts/tests/*.test.mjs",
+    "test:starter": "node scripts/check-packed-starter.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.6.2",

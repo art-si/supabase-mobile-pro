@@ -2,6 +2,10 @@
 
 司机端、货主端和 SMIS 共用司机端的移动样式。主仓维护样式、主题状态、字体、通用组件和构建脚本。三个 Git 子仓各自维护业务页面、登录、权限、API、路由和应用发布配置。
 
+## 新业务接入
+
+新项目从 [独立接入与升级指南](docs/mobile-consumer.md) 开始，直接引用 Pro 包而不是复制 `mobile-core`。模板使用公共组件和主题，不带项目账号、API、权限或地图配置。开发规范通过 `pnpm exec mobile-pro design` 读取当前包版本，包含 Apple Design、UI UX Pro Max、Ponytail 的统一来源。
+
 ## 开发
 
 使用 Node.js 22.13 或更新版本，并按主仓 `package.json` 中的版本使用 pnpm。
