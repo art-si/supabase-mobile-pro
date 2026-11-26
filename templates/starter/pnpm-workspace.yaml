@@ -8,7 +8,8 @@ allowBuilds:
 publicHoistPattern:
   - '@capacitor/*'
   - '@dcloudio/*'
-  - '@vue/*'
+  - '@vue/compiler-sfc'
+  - '@vue/tsconfig'
   - '@wot-ui/ui'
   - pinia
   - sass
