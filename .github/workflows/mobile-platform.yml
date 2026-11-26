@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: '24'
       - name: Check Pro tooling
-        run: node --test scripts/tests/*.test.mjs
+        run: node --test scripts/tests/*.test.mjs scripts/test-media-picker-session.mjs scripts/test-video-posters-mini.mjs
       - name: Install pinned pnpm
         run: npm install -g "$(node -p 'require("./package.json").packageManager')"
       - name: Build the independently installed starter
@@ -41,7 +41,8 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-      - name: Build Fishing against the candidate package
+      - name: Install candidate package into Fishing
+        id: candidate
         shell: bash
         run: |
           archive="$(npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP" --json | node -p 'JSON.parse(require("node:fs").readFileSync(0))[0].filename')"
@@ -57,7 +58,14 @@ jobs:
           pnpm install --no-frozen-lockfile
           pnpm install --frozen-lockfile
           pnpm exec mobile-pro design
-          pnpm typecheck
-          pnpm test
-          pnpm build:h5
-          pnpm build:mp-weixin
+      - name: Check Fishing types and tests
+        working-directory: .ci-fishing
+        run: pnpm typecheck && pnpm test
+      - name: Build Fishing H5
+        if: ${{ !cancelled() && steps.candidate.outcome == 'success' }}
+        working-directory: .ci-fishing
+        run: pnpm build:h5
+      - name: Build and audit Fishing WeChat package
+        if: ${{ !cancelled() && steps.candidate.outcome == 'success' }}
+        working-directory: .ci-fishing
+        run: pnpm build:mp-weixin
