@@ -1,3 +1,7 @@
+<script lang="ts">
+export default {}
+</script>
+
 <style lang="scss">
 @use '@mobile-core/styles/global.scss' as platform;
 @use '@mobile-core/styles/workspace.scss' as workspace;
