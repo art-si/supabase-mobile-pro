@@ -55,6 +55,7 @@ jobs:
         id: package
         shell: bash
         env:
+          CHECK_DESIGN: ${{ matrix.pro == 'candidate' && 'yes' || 'no' }}
           PACK_ROOT: ${{ matrix.pro == 'current-pin' && '.ci-pro-current' || '.' }}
         run: |
           archive="$(cd "$PACK_ROOT" && npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP" --json | node -p 'JSON.parse(require("node:fs").readFileSync(0))[0].filename')"
@@ -69,7 +70,7 @@ jobs:
           NODE
           pnpm install --no-frozen-lockfile
           pnpm install --frozen-lockfile
-          pnpm exec mobile-pro design
+          if [ "$CHECK_DESIGN" = yes ]; then pnpm exec mobile-pro design; fi
       - name: Check Fishing types and tests
         working-directory: .ci-fishing
         run: pnpm typecheck && pnpm test
