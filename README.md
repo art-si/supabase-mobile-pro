@@ -66,9 +66,13 @@ pnpm build:android shipper
 
 在 `packages/mobile-core/src` 修改公共实现。三端从同一套 Sass 样式获取主题色、字体、卡片、按钮和表单控件样式。主题选择沿用各自的缓存键，图标字体沿用各自的图标集。业务页面的专有样式放在所在子仓。
 
+皮肤预览可复用 `MobileThemeCards`：应用传入选中值和包含 `id`、`name`、`description`、`preview` 的选项，预览颜色使用 `background`、`surface`、`ink`、`accent`。组件通过 `update:modelValue` 通知选择；皮肤配置、明暗模式及保存逻辑由应用管理。
+
 三个子仓的登录路由统一渲染 `packages/mobile-core/src/components/MobileLogin.vue`。登录布局、校验、加载状态和账号记忆由主仓维护。子仓提供品牌文案、账号规则、认证回调和登录后的跳转。其他可复用的页面和组件也按这条边界组织。
 
 顶部栏、底部导航、图标和字库、指标卡、状态标签也使用主仓组件。子仓传递各自的导航入口、指标数据和业务状态。应用初始化、启动时加载数据和图片选择的公共实现位于 `packages/mobile-core/src`。
+
+日期选择使用 `MobileCalendarDate`，通过 `v-model` 传入本地时间戳、`v-model:visible` 控制面板。默认只选择日期；设置 `show-time` 后可在同一面板选择小时和分钟，确认时返回精确到分钟的时间戳。`trigger-id` 用于关闭后恢复焦点，`disable-future` 可限制未来日期和时间。
 
 危险操作使用 `MobileConfirmDialog`，设置卡片底部的退出入口使用 `.mobile-row--danger`，空列表和搜索无结果使用 `MobileEmptyState`。各端提供文案和操作回调；取消确认、焦点恢复、状态版式和样式由主仓维护。
 

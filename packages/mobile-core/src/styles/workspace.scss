@@ -147,7 +147,14 @@
   .mobile-dock--sticky {
     position: sticky;
     flex: none;
+    // In a column flex workspace, auto inline margins otherwise shrink the
+    // sticky dock to its contents instead of stretching it across the page.
+    width: 100%;
+    margin-inline: 0;
     margin-top: auto;
+    /* #ifdef H5 */
+    inset-inline: auto;
+    /* #endif */
   }
 
   .mobile-dock__actions {

@@ -50,6 +50,10 @@ The Gradle Wrapper is used by default. If it cannot download Gradle, set `GRADLE
 
 Edit the shared source in `packages/mobile-core/src`. Development, builds, and type checks copy it into each app's ignored `src/_mobile-core/` directory for the mini program compiler. Restart a running development server to pick up changes to the shared source. For a standalone app checkout, `pnpm install` downloads the pinned Gitee archive. A checkout under the main repository's `modules/` directory uses the local shared sources. Set `MOBILE_PRO_ROOT` to use a local platform checkout for joint development.
 
+Use `MobileThemeCards` for reusable skin previews. Pass the selected value and options containing `id`, `name`, `description`, and `preview` colors (`background`, `surface`, `ink`, `accent`). It emits `update:modelValue`; each app owns its palettes, light or dark appearance, and persistence.
+
+Use `MobileCalendarDate` with a local timestamp in `v-model` and control its panel with `v-model:visible`. It selects a date by default; `show-time` adds hour and minute selection in the same panel and returns a timestamp at minute precision. Use `trigger-id` to restore focus and `disable-future` to disallow future dates and times.
+
 Pro owns the shared Vue, Pinia, Wot UI, Uni-app, build, and type-check tool versions. Each app's `mobile-pro` command uses the pinned archive and its installed dependencies. To upgrade, publish a tested Pro commit, then pin that same commit in each consumer and refresh their pnpm lockfiles.
 
 Pro also owns the shared Capacitor platform, CLI, and plugin versions. Each native app selects the plugins it syncs through Capacitor's `includePlugins` setting.

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import MobileBottomSheet from './MobileBottomSheet.vue'
+import MobileTimeWheel from './MobileTimeWheel.vue'
 import MobileIcon from './MobileIcon.vue'
 import { activateActionKey, preventActionKey } from '../action-keyboard'
 import { elementOf, type ElementTarget } from '../form-focus'
@@ -8,7 +9,7 @@ import { CALENDAR_WEEKDAYS, monthDayNumbers } from '../month-calendar'
 
 defineOptions({ options: { virtualHost: true, styleIsolation: 'apply-shared' } })
 
-const props = defineProps<{ title: string; triggerId?: string; disableFuture?: boolean }>()
+const props = defineProps<{ title: string; triggerId?: string; disableFuture?: boolean; showTime?: boolean }>()
 const date = defineModel<number>({ required: true })
 const visible = defineModel<boolean>('visible', { required: true })
 
@@ -20,6 +21,7 @@ const cursor = ref(0)
 const today = ref(0)
 const minDate = ref(0)
 const maxDate = ref(0)
+const time = ref([0, 0])
 
 function midnight(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
@@ -36,7 +38,10 @@ watch(visible, (open) => {
   today.value = midnight(now)
   minDate.value = new Date(now.getFullYear() - 5, 0, 1).getTime()
   maxDate.value = props.disableFuture ? today.value : new Date(now.getFullYear() + 1, 11, 31).getTime()
-  const value = midnight(new Date(date.value))
+  const initial = new Date(date.value)
+  const value = midnight(initial)
+  const initialTime = Number.isFinite(initial.getTime()) ? initial : now
+  time.value = [initialTime.getHours(), initialTime.getMinutes()]
   selected.value = cursor.value = Number.isFinite(value) ? clampDay(value) : today.value
 }, { immediate: true, flush: 'sync' })
 
@@ -74,8 +79,30 @@ function cancel() {
   visible.value = false
 }
 
+const selectedDateTime = computed(() => {
+  const [hour, minute] = time.value
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23 || !Number.isInteger(minute) || minute < 0 || minute > 59) return undefined
+  const value = new Date(selected.value)
+  value.setHours(hour, minute, 0, 0)
+  // A local time skipped by a daylight-saving transition must not silently change.
+  return value.getHours() === hour && value.getMinutes() === minute
+    ? value.getTime() : undefined
+})
+const timeError = computed(() => {
+  if (!props.showTime) return ''
+  if (selectedDateTime.value === undefined) return '该日期没有此时间，请重新选择。'
+  return props.disableFuture && selectedDateTime.value > Date.now() ? '时间不能晚于当前时间。' : ''
+})
+const canConfirm = computed(() => !props.showTime || (selectedDateTime.value !== undefined && !timeError.value))
+const selectedLabel = computed(() => {
+  const suffix = props.showTime && selectedDateTime.value !== undefined
+    ? ` ${String(time.value[0]).padStart(2, '0')}:${String(time.value[1]).padStart(2, '0')}` : ''
+  return `${formatDate(selected.value)}${suffix}`
+})
+
 function confirm() {
-  date.value = selected.value
+  if (!canConfirm.value) return
+  date.value = props.showTime ? selectedDateTime.value! : selected.value
   cancel()
 }
 
@@ -107,7 +134,7 @@ function onDayKey(event: KeyboardEvent) {
 </script>
 
 <template>
-  <MobileBottomSheet v-model="visible" :title="title" close-label="关闭日期选择"
+  <MobileBottomSheet v-model="visible" :title="title" :close-label="showTime ? '关闭日期时间选择' : '关闭日期选择'"
     root-portal :z-index="180" :trigger-id="triggerId"
     :dialog-id="triggerId ? `${triggerId}-date-dialog` : undefined"
     initial-focus=".mobile-calendar__day[tabindex='0']">
@@ -148,15 +175,20 @@ function onDayKey(event: KeyboardEvent) {
           <view v-else aria-hidden="true" />
         </template>
       </view>
+      <view v-if="showTime" class="mobile-calendar__time">
+        <text class="mobile-calendar__time-title">时间 · 24 小时制</text>
+        <MobileTimeWheel v-if="visible" v-model="time" compact />
+        <text v-if="timeError" class="mobile-calendar__time-error" role="alert">{{ timeError }}</text>
+      </view>
     </view>
     <template #footer>
       <view class="mobile-calendar__footer">
-        <text class="mobile-calendar__selection" role="status">已选：{{ formatDate(selected) }}</text>
+        <text class="mobile-calendar__selection" role="status">已选：{{ selectedLabel }}</text>
         <button class="mobile-action mobile-calendar__action mobile-calendar__action--cancel"
           role="button" tabindex="0" hover-class="mobile-action--pressed"
           @click="cancel" @keydown="preventActionKey" @keyup="activateActionKey($event, cancel)">取消</button>
         <button class="mobile-action mobile-calendar__action mobile-calendar__action--confirm"
-          role="button" tabindex="0" hover-class="mobile-action--pressed"
+          role="button" :tabindex="canConfirm ? 0 : -1" :disabled="!canConfirm" :aria-disabled="!canConfirm || undefined" hover-class="mobile-action--pressed"
           @click="confirm" @keydown="preventActionKey" @keyup="activateActionKey($event, confirm)">确定</button>
       </view>
     </template>
@@ -227,6 +259,10 @@ function onDayKey(event: KeyboardEvent) {
 .mobile-calendar__day--pressed .mobile-calendar__number:not(.mobile-calendar__number--selected) {
   background: var(--tms-primary-soft, var(--smis-primary-soft));
 }
+
+.mobile-calendar__time { display: grid; gap: 8px; padding: 12px 4px 4px; border-top: 1px solid var(--mobile-workspace-line, var(--tms-line-subtle, var(--smis-line-subtle))); }
+.mobile-calendar__time-title { color: var(--mobile-workspace-ink, var(--tms-text-strong, var(--smis-text-strong))); font-size: .875rem; font-weight: 650; }
+.mobile-calendar__time-error { color: var(--tms-red-strong, var(--smis-red-strong, #b42318)); font-size: .8125rem; line-height: 1.4; }
 
 .mobile-calendar__footer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .mobile-calendar__selection { grid-column: 1 / -1; font-size: max(12px, .8125rem); color: var(--mobile-workspace-muted, #566174); }

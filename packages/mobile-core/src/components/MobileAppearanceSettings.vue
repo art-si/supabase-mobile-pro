@@ -47,6 +47,7 @@ function retry() {
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
+.mobile-appearance-settings__hint { text-wrap: balance; }
 .mobile-appearance-settings__feedback {
   display: flex;
   flex-wrap: wrap;
