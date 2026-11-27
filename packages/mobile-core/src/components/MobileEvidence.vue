@@ -59,7 +59,10 @@ interface Thumbnail {
 }
 
 const thumbnails = ref<Thumbnail[]>([]);
-const trayStyle = computed(() => props.compact && props.overlayRemove
+// An original-image action needs its own row instead of being clipped by the compact tray.
+const horizontalTray = computed(() => props.compact && props.overlayRemove &&
+  (props.customPreview || !thumbnails.value.some((item) => item.failed)));
+const trayStyle = computed(() => horizontalTray.value
   ? { width: `${thumbnails.value.length * 112 + Math.max(0, thumbnails.value.length - 1) * 12}px` }
   : undefined);
 
@@ -147,15 +150,15 @@ defineExpose({ preview });
   <view
     ref="root"
     class="mobile-evidence"
-    :class="{ 'mobile-evidence--overlay-remove': overlayRemove, 'mobile-evidence--reorderable': reorderable && !disabled, 'mobile-evidence--compact': compact }"
+    :class="{ 'mobile-evidence--overlay-remove': overlayRemove, 'mobile-evidence--reorderable': reorderable && !disabled, 'mobile-evidence--compact': compact, 'mobile-evidence--horizontal': horizontalTray }"
   >
-    <MobileMediaTray v-if="thumbnails.length" :horizontal="compact && overlayRemove" :scrolling="!reorder.dragging.value">
+    <MobileMediaTray v-if="thumbnails.length" :horizontal="horizontalTray" :scrolling="!reorder.dragging.value">
     <view class="mobile-evidence__grid" :style="trayStyle">
       <view
         v-for="(thumbnail, index) in thumbnails"
         :key="thumbnail.key"
         class="mobile-evidence__item"
-        :class="{ 'mobile-evidence__item--dragging': reorder.from.value === index, 'mobile-evidence__item--target': reorder.dragging.value && reorder.target.value === index && reorder.from.value !== index }"
+        :class="{ 'mobile-evidence__item--dragging': reorder.from.value === index, 'mobile-evidence__item--target': reorder.dragging.value && reorder.target.value === index && reorder.from.value !== index, 'mobile-evidence__item--original': thumbnail.failed && !customPreview }"
         :style="reorder.style(index)"
       >
         <button
@@ -316,11 +319,17 @@ defineExpose({ preview });
   width: 112px;
   height: 112px;
 }
+.mobile-evidence--overlay-remove .mobile-evidence__item--original { height: auto; }
+.mobile-evidence--overlay-remove .mobile-evidence__item--original .mobile-evidence__status--overlay { bottom: 44px; }
 .mobile-evidence--overlay-remove .mobile-action.mobile-evidence__preview {
   width: 100%;
   height: 100%;
   min-height: 0;
   aspect-ratio: auto;
+}
+.mobile-evidence--overlay-remove .mobile-evidence__item--original .mobile-action.mobile-evidence__preview {
+  height: auto;
+  aspect-ratio: 1;
 }
 .mobile-evidence--overlay-remove .mobile-action.mobile-evidence__remove {
   position: absolute;
@@ -338,7 +347,7 @@ defineExpose({ preview });
   align-items: center;
   justify-content: center;
 }
-.mobile-evidence--compact.mobile-evidence--overlay-remove .mobile-evidence__grid {
+.mobile-evidence--horizontal .mobile-evidence__grid {
   flex-wrap: nowrap;
   min-width: 100%;
 }
